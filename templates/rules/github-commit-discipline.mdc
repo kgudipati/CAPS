@@ -1,6 +1,6 @@
 ---
 description: Enforces structured and meaningful Git commit messages and practices.
-globs: ["*"] # Applies conceptually to the Git process
+globs: 
 alwaysApply: false
 ---
 Follow structured commit message conventions (e.g., Conventional Commits: `<type>(<scope>): <description>`).

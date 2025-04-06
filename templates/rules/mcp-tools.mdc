@@ -1,6 +1,12 @@
 ---
-description: 
-globs: 
+description: Encourages effective use of Cursor's Multi-Context Prompting (MCP) tools.
+globs: ["*"] # Applies conceptually to the development workflow in Cursor
 alwaysApply: false
 ---
-Utilize Multi-Context Prompting (MCP) tools within Cursor when appropriate for tasks like code generation, explanation, refactoring, or running commands. Understand the capabilities and limitations of available MCP tools to use them effectively. 
+Leverage Cursor's built-in Multi-Context Prompting (MCP) tools effectively during development.
+
+- **Understand Tool Capabilities:** Familiarize yourself with available tools (e.g., for code generation, explanation, refactoring, terminal commands, file system operations).
+- **Choose the Right Tool:** Select the most appropriate tool for the task at hand (e.g., use `edit_file` for modifications, `codebase_search` for finding relevant code, `run_terminal_cmd` for execution).
+- **Provide Clear Context:** Ensure your prompts and instructions provide sufficient context for the AI to understand the request accurately.
+- **Verify AI Actions:** Review code generated or modified by MCP tools. Double-check commands proposed by `run_terminal_cmd` before approval.
+- **Iterate when Necessary:** If the initial result isn't perfect, refine your prompt or instructions and try again. 
