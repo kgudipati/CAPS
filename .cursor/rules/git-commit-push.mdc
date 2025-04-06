@@ -1,0 +1,17 @@
+---
+description: Ensures that all changes are committed and pushed to GitHub consistently.
+globs: *.py, *.ts, *.tsx, *.json
+alwaysApply: false
+---
+Ensure all changes are committed and pushed to GitHub after approval.
+
+Workflow:
+1. Run `git add <updated-files-and-directories> ...`
+2. Commit changes using `git commit -m '<structured commit message>'`
+3. Push changes using `git push origin <branch>`
+
+Rules:
+- No uncommitted changes should remain before switching tasks.
+- Ensure meaningful and structured commit messages.
+- Keep commits atomic—one logical change per commit.
+- Push changes regularly to maintain a clean Git history.

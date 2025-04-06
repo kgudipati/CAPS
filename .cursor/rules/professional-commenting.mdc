@@ -1,0 +1,18 @@
+---
+description: Ensures that all functions and classes include professional docstrings and meaningful comments.
+globs: *.py, *.ts, *.tsx, *.json, *
+alwaysApply: true
+---
+Ensure all functions and classes have professional, meaningful docstrings and comments.
+
+Python:
+- Use Google-style docstrings for functions and classes.
+- Avoid redundant comments that state the obvious.
+- Keep comments updated alongside code changes.
+- Explain the *why* behind complex logic.
+
+TypeScript:
+- Use JSDoc for all public functions, methods, and classes.
+- Include parameter types and return types in documentation.
+- Describe function behavior, expected inputs, and outputs.
+- Keep inline comments minimal and meaningful.

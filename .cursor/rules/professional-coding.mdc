@@ -1,0 +1,13 @@
+---
+description: Ensures all generated Python and TypeScript code follows professional coding standards.
+globs: *.py, *.ts, *.tsx
+alwaysApply: false
+---
+Ensure all generated Python and TypeScript code follows professional coding standards.
+
+- Use `black` for Python formatting with `--line-length 88`.
+- Use `ruff` for Python linting with `--fix` enabled.
+- Use `eslint` for TypeScript linting with `--fix` enabled.
+- Use `prettier` for TypeScript formatting with `--write` enabled.
+- Code must follow PEP 8 (Python) and standard TypeScript best practices.
+- Ensure modular, reusable, and maintainable code.

@@ -1,0 +1,22 @@
+---
+description: Enforces structured commit messages following a standardized format.
+globs: *.py, *.ts, *.tsx, *.json, *
+alwaysApply: false
+---
+Ensure all commits follow a structured commit message format.
+
+Commit format:
+`<type>(<scope>): <description>`
+
+Examples:
+- `feat(api): add support for user authentication`
+- `fix(db): resolve connection timeout issue`
+- `docs(readme): update setup instructions`
+- `test(utils): add unit tests for string formatter`
+- `chore(deps): update dependency versions`
+
+Rules:
+- Use **imperative mood** (e.g., "Add feature" instead of "Added feature").
+- Limit commit message title to **72 characters**.
+- Provide a **detailed commit body** when necessary.
+- Reference issues if applicable (e.g., `fix #123`).
