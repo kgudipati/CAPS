@@ -2,17 +2,13 @@
 
 import React from 'react';
 import TextAreaInput from '@/components/TextAreaInput';
-import CheckboxGroup from '@/components/CheckboxGroup'; // Assuming basic CheckboxGroup for now
+import CheckboxGroup from '@/components/CheckboxGroup';
+import TextInput from '@/components/TextInput'; // Import TextInput
 import { useProjectInputStore } from '@/lib/store';
-import { ProjectInputState } from '@/types'; // Import the main state type
+import { ProjectInputState, TechStack, GenerationOptions } from '@/types'; // Add GenerationOptions
 
-// Define options for checkboxes (will need refinement for nested structure)
-const techStackOptions = [
-  { id: 'frontend-react', label: 'React' },
-  { id: 'frontend-vue', label: 'Vue' },
-  { id: 'backend-node', label: 'Node.js' },
-  { id: 'db-postgres', label: 'PostgreSQL' },
-];
+// Define generation options (tech stack options removed)
+// const techStackOptions = [ ... ]; // Removed
 
 const generationOptions = {
   rules: [{ id: 'gen-rules', label: 'Project-specific Rules' }],
@@ -28,22 +24,49 @@ const generationOptions = {
 };
 
 export default function HomePage() {
-  // Get the entire state and actions
   const store = useProjectInputStore();
 
   const handleTextChange = (field: keyof Pick<ProjectInputState, 'projectDescription' | 'problemStatement' | 'features' | 'targetUsers'>) => (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     store.updateField(field, e.target.value);
   };
 
-  // TODO: Implement actual state update logic for checkboxes
-  const handleTechStackChange = (optionId: string, isChecked: boolean) => {
-    console.log('Tech Stack Change:', optionId, isChecked);
-    // store.updateTechStack(...);
+  // Handler for Tech Stack Text Inputs
+  const handleTechStackTextChange = (field: keyof TechStack) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    store.updateTechStackField(field, e.target.value);
   };
 
   const handleGenerationOptionChange = (type: 'rules' | 'specs' | 'checklist', optionId: string, isChecked: boolean) => {
      console.log('Generation Option Change:', type, optionId, isChecked);
-     // store.updateGenerationOption(type, optionId, isChecked);
+
+     // Type assertion for keys based on type
+     let key: keyof GenerationOptions['specs'] | 'rules' | 'checklist';
+
+     if (type === 'rules') {
+         key = 'rules';
+     } else if (type === 'checklist') {
+         key = 'checklist';
+     } else if (type === 'specs') {
+         const specKeyMap: { [id: string]: keyof GenerationOptions['specs'] } = {
+             'spec-prd': 'prd',
+             'spec-tps': 'tps',
+             'spec-uiux': 'uiUx',
+             'spec-tech': 'technical',
+             'spec-data': 'data',
+             'spec-integ': 'integration',
+         };
+         const mappedKey = specKeyMap[optionId];
+         if (!mappedKey) {
+             console.error(`Invalid spec optionId: ${optionId}`);
+             return;
+         }
+         key = mappedKey;
+     } else {
+         console.error(`Invalid generation option type: ${type}`);
+         return;
+     }
+
+     // Call store action with correctly typed key
+     store.updateGenerationOption(type, key, isChecked);
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -51,15 +74,14 @@ export default function HomePage() {
     store.setLoading(true);
     store.setError(null);
 
-    // Prepare data for API (pick only necessary fields)
     const currentState = useProjectInputStore.getState();
     const formData = {
         projectDescription: currentState.projectDescription,
         problemStatement: currentState.problemStatement,
         features: currentState.features,
         targetUsers: currentState.targetUsers,
-        techStack: currentState.techStack, // TODO: Ensure this structure is correct/handled by API
-        generationOptions: currentState.generationOptions, // TODO: Ensure this structure is correct/handled by API
+        techStack: currentState.techStack,
+        generationOptions: currentState.generationOptions,
     };
     console.log('Submitting form data:', formData);
 
@@ -160,39 +182,68 @@ export default function HomePage() {
 
         <section>
           <h2 className="text-xl font-semibold mb-4 border-b pb-2">Technology Stack (Optional)</h2>
-          <p className="text-sm text-gray-600 mb-3">Select the technologies you plan to use, or let the AI decide based on your project description.</p>
-          {/* TODO: Implement component and state logic for nested tech stack categories */}
-          <CheckboxGroup
-            legend="Select Technologies"
-            options={techStackOptions}
-             selectedValues={[] /* Placeholder - Get actual value from store.techStack */} 
-            onChange={handleTechStackChange}
-          />
+          <p className="text-sm text-gray-600 mb-3">Describe the technologies you plan to use (e.g., React, Node.js, PostgreSQL, AWS S3), or leave blank to let the AI decide.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+             <TextInput
+                label="Frontend"
+                id="tech-frontend"
+                value={store.techStack.frontend}
+                onChange={handleTechStackTextChange('frontend')}
+                placeholder="e.g., React, Next.js, Tailwind CSS"
+             />
+             <TextInput
+                label="Backend"
+                id="tech-backend"
+                value={store.techStack.backend}
+                onChange={handleTechStackTextChange('backend')}
+                placeholder="e.g., Node.js, Express, Python/Django"
+             />
+             <TextInput
+                label="Database"
+                id="tech-database"
+                value={store.techStack.database}
+                onChange={handleTechStackTextChange('database')}
+                placeholder="e.g., PostgreSQL, MongoDB, Supabase"
+             />
+             <TextInput
+                label="Infrastructure/Hosting"
+                id="tech-infrastructure"
+                value={store.techStack.infrastructure}
+                onChange={handleTechStackTextChange('infrastructure')}
+                placeholder="e.g., Vercel, AWS (S3, EC2), Docker"
+             />
+             <TextInput
+                label="Other Tools/Libraries"
+                id="tech-other"
+                value={store.techStack.other}
+                onChange={handleTechStackTextChange('other')}
+                placeholder="e.g., Zustand, Stripe, Auth0"
+             />
+          </div>
         </section>
 
         <section>
           <h2 className="text-xl font-semibold mb-4 border-b pb-2">Generation Options</h2>
           <div className="space-y-4">
-            {/* TODO: Implement component and state logic for generation options */}
             <CheckboxGroup
               legend="Generate Rules?"
               options={generationOptions.rules}
-               selectedValues={store.generationOptions.rules ? [generationOptions.rules[0].id] : [] /* Placeholder */} 
+              selectedValues={store.generationOptions.rules ? [generationOptions.rules[0].id] : []}
               onChange={(id, checked) => handleGenerationOptionChange('rules', id, checked)}
             />
              <CheckboxGroup
-              legend="Generate Specs?"
+              legend="Generate Specs? (Select all that apply)"
               options={generationOptions.specs}
-               selectedValues={Object.entries(store.generationOptions.specs)
-                .filter(([, v]) => v)
-                .map(([k]) => generationOptions.specs.find(opt => opt.id.includes(k))?.id ?? '')
-                .filter(id => id) /* Placeholder */} 
+              selectedValues={Object.entries(store.generationOptions.specs)
+                .filter(([, value]) => value)
+                .map(([key]) => generationOptions.specs.find(opt => opt.id.includes(key as keyof GenerationOptions['specs']))?.id ?? '') // Ensure key is typed here
+                .filter(id => !!id)}
               onChange={(id, checked) => handleGenerationOptionChange('specs', id, checked)}
             />
              <CheckboxGroup
               legend="Generate Checklist?"
               options={generationOptions.checklist}
-               selectedValues={store.generationOptions.checklist ? [generationOptions.checklist[0].id] : [] /* Placeholder */} 
+              selectedValues={store.generationOptions.checklist ? [generationOptions.checklist[0].id] : []}
               onChange={(id, checked) => handleGenerationOptionChange('checklist', id, checked)}
             />
           </div>

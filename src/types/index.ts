@@ -1,9 +1,9 @@
 export interface TechStack {
-  frontend: string[];
-  backend: string[];
-  database: string[];
-  infrastructure: string[];
-  other: string[];
+  frontend: string;
+  backend: string;
+  database: string;
+  infrastructure: string;
+  other: string;
 }
 
 export interface GenerationOptions {
