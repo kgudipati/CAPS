@@ -203,15 +203,15 @@ Structure the Technical Specification with the following sections using Markdown
 
 ## 5. Data Model / Schema Changes
    - [Detail new or modified database tables, fields, relationships, or indexes based on the features and data requirements.]
-   - **New Table: `{table_name}`**
-     - `id`: [Type, e.g., UUID PRIMARY KEY]
-     - `user_id`: [Type, e.g., UUID, REFERENCES users(id)]
-     - `{field_name}`: [Type, e.g., VARCHAR(255), TIMESTAMP, BOOLEAN DEFAULT false]
-     - `created_at`: [Type, e.g., TIMESTAMP DEFAULT NOW()]
-   - **Modified Table: `{existing_table}`**
-     - **Add column:** `{new_column}` [Type, Constraints]
-     - **Modify column:** `{column_name}` [New type or constraints]
-   - **Indexes:** [Mention any new indexes needed, e.g., "Add index on `user_id` in `{table_name}`"]
+   - **New Table: \`{table_name}\`**
+     - \`id\`: [Type, e.g., UUID PRIMARY KEY]
+     - \`user_id\`: [Type, e.g., UUID, REFERENCES users(id)]
+     - \`{field_name}\`: [Type, e.g., VARCHAR(255), TIMESTAMP, BOOLEAN DEFAULT false]
+     - \`created_at\`: [Type, e.g., TIMESTAMP DEFAULT NOW()]
+   - **Modified Table: \`{existing_table}\`**
+     - **Add column:** \`{new_column}\` [Type, Constraints]
+     - **Modify column:** \`{column_name}\` [New type or constraints]
+   - **Indexes:** [Mention any new indexes needed, e.g., "Add index on \`user_id\` in \`{table_name}\`"]
    - [If no DB changes, state "No database schema changes required."]
 
 ## 6. Business Logic & Workflow
@@ -221,7 +221,7 @@ Structure the Technical Specification with the following sections using Markdown
      - 2. Validate input (non-empty IDs, check user auth).
      - 3. Query database: Check if item already saved by this user.
      - 4. IF exists, return {conflict/already saved error}.
-     - 5. ELSE Insert new record into `saved_items` table (userId, itemId).
+     - 5. ELSE Insert new record into \`saved_items\` table (userId, itemId).
      - 6. IF insert successful, return {success message}.
      - 7. ELSE return {database error}.
 
