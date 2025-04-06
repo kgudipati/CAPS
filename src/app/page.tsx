@@ -4,9 +4,10 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TextAreaInput from '@/components/TextAreaInput';
 import CheckboxGroup from '@/components/CheckboxGroup';
-import TextInput from '@/components/TextInput'; // Import TextInput
+import BadgeInput from '@/components/BadgeInput'; // Import BadgeInput
 import { useProjectInputStore, AIProvider } from '@/lib/store';
 import { ProjectInputState, TechStack, GenerationOptions, ProjectInputData } from '@/types'; // Add GenerationOptions and ProjectInputData
+import { TECH_CHOICES } from '@/lib/constants'; // Import tech choices
 
 // Define generation options (tech stack options removed)
 // const techStackOptions = [ ... ]; // Removed
@@ -44,8 +45,11 @@ export default function HomePage() {
   };
 
   // Handler for Tech Stack Text Inputs
-  const handleTechStackTextChange = (field: keyof TechStack) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    store.updateTechStackField(field, e.target.value);
+  const handleAddTechItem = (field: keyof TechStack, item: string) => {
+    store.addTechStackItem(field, item);
+  };
+  const handleRemoveTechItem = (field: keyof TechStack, item: string) => {
+    store.removeTechStackItem(field, item);
   };
 
   const handleGenerationOptionChange = (type: 'rules' | 'specs' | 'checklist', optionId: string, isChecked: boolean) => {
@@ -274,17 +278,67 @@ export default function HomePage() {
                       />
                   </div>
               );
-           case 3: // Tech Stack - Will be replaced later
+           case 3: // Use BadgeInput for Tech Stack
               return (
-                  <div className="space-y-6"> {/* Increased spacing */}
+                  <div className="space-y-6">
                     <h3 className="text-lg font-medium text-slate-200 mb-1">Technology Stack (Optional)</h3>
-                    <p className="text-sm text-slate-400 mb-4">Describe the tech stack, or leave blank.</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5"> {/* Increased gap */}
-                       <TextInput label="Frontend" id="tech-frontend" value={store.techStack.frontend} onChange={handleTechStackTextChange('frontend')} placeholder="e.g., React, Next.js" labelClassName="text-slate-300" wrapperClassName="mb-0" inputClassName="bg-slate-700 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 rounded-md" />
-                       <TextInput label="Backend" id="tech-backend" value={store.techStack.backend} onChange={handleTechStackTextChange('backend')} placeholder="e.g., Node.js, Python" labelClassName="text-slate-300" wrapperClassName="mb-0" inputClassName="bg-slate-700 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 rounded-md"/>
-                       <TextInput label="Database" id="tech-database" value={store.techStack.database} onChange={handleTechStackTextChange('database')} placeholder="e.g., PostgreSQL" labelClassName="text-slate-300" wrapperClassName="mb-0" inputClassName="bg-slate-700 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 rounded-md"/>
-                       <TextInput label="Infrastructure/Hosting" id="tech-infrastructure" value={store.techStack.infrastructure} onChange={handleTechStackTextChange('infrastructure')} placeholder="e.g., Vercel, AWS" labelClassName="text-slate-300" wrapperClassName="mb-0" inputClassName="bg-slate-700 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 rounded-md"/>
-                       <TextInput label="Other Tools/Libraries" id="tech-other" value={store.techStack.other} onChange={handleTechStackTextChange('other')} placeholder="e.g., Zustand, Stripe" labelClassName="text-slate-300" wrapperClassName="mb-0" inputClassName="bg-slate-700 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 rounded-md"/>
+                    <p className="text-sm text-slate-400 mb-4">Select or type technologies you plan to use.</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+                       <BadgeInput
+                            label="Frontend"
+                            id="tech-frontend"
+                            selectedItems={store.techStack.frontend}
+                            availableChoices={TECH_CHOICES.frontend}
+                            onAdd={(item) => handleAddTechItem('frontend', item)}
+                            onRemove={(item) => handleRemoveTechItem('frontend', item)}
+                            placeholder="e.g., React, Next.js"
+                            labelClassName="!mb-1.5" // Adjust label margin
+                            wrapperClassName="mb-0"
+                       />
+                       <BadgeInput
+                            label="Backend"
+                            id="tech-backend"
+                            selectedItems={store.techStack.backend}
+                            availableChoices={TECH_CHOICES.backend}
+                            onAdd={(item) => handleAddTechItem('backend', item)}
+                            onRemove={(item) => handleRemoveTechItem('backend', item)}
+                            placeholder="e.g., Node.js, Python"
+                            labelClassName="!mb-1.5"
+                            wrapperClassName="mb-0"
+                       />
+                       <BadgeInput
+                            label="Database"
+                            id="tech-database"
+                            selectedItems={store.techStack.database}
+                            availableChoices={TECH_CHOICES.database}
+                            onAdd={(item) => handleAddTechItem('database', item)}
+                            onRemove={(item) => handleRemoveTechItem('database', item)}
+                            placeholder="e.g., PostgreSQL"
+                            labelClassName="!mb-1.5"
+                            wrapperClassName="mb-0"
+                       />
+                       <BadgeInput
+                            label="Infrastructure/Hosting"
+                            id="tech-infrastructure"
+                            selectedItems={store.techStack.infrastructure}
+                            availableChoices={TECH_CHOICES.infrastructure}
+                            onAdd={(item) => handleAddTechItem('infrastructure', item)}
+                            onRemove={(item) => handleRemoveTechItem('infrastructure', item)}
+                            placeholder="e.g., Vercel, AWS"
+                            labelClassName="!mb-1.5"
+                            wrapperClassName="mb-0"
+                       />
+                       <BadgeInput
+                            label="Other Tools/Libraries"
+                            id="tech-other"
+                            selectedItems={store.techStack.other}
+                            availableChoices={TECH_CHOICES.other}
+                            onAdd={(item) => handleAddTechItem('other', item)}
+                            onRemove={(item) => handleRemoveTechItem('other', item)}
+                            placeholder="e.g., Zustand, Stripe"
+                            labelClassName="!mb-1.5"
+                            wrapperClassName="mb-0"
+                       />
                     </div>
                   </div>
               );
