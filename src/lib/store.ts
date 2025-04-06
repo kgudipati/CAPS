@@ -4,20 +4,26 @@ import { ProjectInputState, TechStack, GenerationOptions } from '@/types';
 // Define supported AI providers
 export type AIProvider = 'openai' | 'google' | 'anthropic';
 
-// Define the state structure including the AI provider selection
+// Define the number of steps
+const TOTAL_STEPS = 5; // 0: Desc+AI, 1: Prob+Users, 2: Features, 3: Stack, 4: GenOpts
+
+// Define the state structure including the AI provider selection and current step
 interface CAPSState extends Omit<ProjectInputState, 'apiKey'> { // Reuse existing type excluding apiKey
   selectedAIProvider: AIProvider;
+  currentStep: number; // Add current step state
 }
 
-// Define actions including one for the AI provider
+// Define actions including step navigation
 interface CAPSActions {
-  updateField: (field: keyof Omit<CAPSState, 'techStack' | 'generationOptions' | 'isLoading' | 'error' | 'selectedAIProvider'>, value: string) => void;
+  updateField: (field: keyof Omit<CAPSState, 'techStack' | 'generationOptions' | 'isLoading' | 'error' | 'selectedAIProvider' | 'currentStep'>, value: string) => void;
   updateTechStackField: (field: keyof TechStack, value: string) => void;
   updateGenerationOption: (type: 'rules' | 'specs' | 'checklist', key: keyof GenerationOptions['specs'] | 'rules' | 'checklist', value: boolean) => void;
-  setSelectedAIProvider: (provider: AIProvider) => void; // New action
+  setSelectedAIProvider: (provider: AIProvider) => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
   reset: () => void;
+  goToNextStep: () => void; // Action to go to next step
+  goToPrevStep: () => void; // Action to go to previous step
 }
 
 // Define the initial state structure more explicitly
@@ -51,12 +57,13 @@ const initialState: CAPSState = {
   techStack: initialTechStack,
   generationOptions: initialGenerationOptions,
   selectedAIProvider: 'openai', // Default to OpenAI
+  currentStep: 0, // Start at step 0
   isLoading: false,
   error: null,
 };
 
 // Create the Zustand store
-export const useProjectInputStore = create<CAPSState & CAPSActions>((set) => ({
+export const useProjectInputStore = create<CAPSState & CAPSActions>((set, get) => ({
   ...initialState,
 
   updateField: (field, value) => set((state) => ({ ...state, [field]: value })),
@@ -95,11 +102,21 @@ export const useProjectInputStore = create<CAPSState & CAPSActions>((set) => ({
     return state; // Return current state if type is invalid
   }),
 
-  setSelectedAIProvider: (provider) => set({ selectedAIProvider: provider }), // Implement new action
+  setSelectedAIProvider: (provider) => set({ selectedAIProvider: provider }),
 
   setLoading: (isLoading) => set({ isLoading }),
 
   setError: (error) => set({ error }),
 
-  reset: () => set({ ...initialState }), // Ensure reset sets the default provider too
+  reset: () => set({ ...initialState }), // Ensure reset resets step and provider
+
+  // Step Navigation Actions
+  goToNextStep: () => set((state) => ({
+    currentStep: Math.min(state.currentStep + 1, TOTAL_STEPS - 1) // Prevent going beyond last step
+  })),
+
+  goToPrevStep: () => set((state) => ({
+    currentStep: Math.max(state.currentStep - 1, 0) // Prevent going below first step
+  })),
+
 })); 

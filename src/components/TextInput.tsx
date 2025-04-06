@@ -8,6 +8,9 @@ interface TextInputProps {
   placeholder?: string;
   required?: boolean;
   type?: string;
+  inputClassName?: string;
+  labelClassName?: string;
+  wrapperClassName?: string;
 }
 
 const TextInput: React.FC<TextInputProps> = ({
@@ -18,10 +21,17 @@ const TextInput: React.FC<TextInputProps> = ({
   placeholder = '',
   required = false,
   type = 'text',
+  inputClassName = '',
+  labelClassName = '',
+  wrapperClassName = ''
 }) => {
+  const defaultWrapperClasses = "mb-4";
+  const defaultLabelClasses = "block text-sm font-medium text-gray-700 mb-1";
+  const defaultInputClasses = "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm";
+
   return (
-    <div className="mb-4">
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
+    <div className={`${defaultWrapperClasses} ${wrapperClassName}`.trim()}>
+      <label htmlFor={id} className={`${defaultLabelClasses} ${labelClassName}`.trim()}>
         {label}
         {required && <span className="text-red-500">*</span>}
       </label>
@@ -29,7 +39,7 @@ const TextInput: React.FC<TextInputProps> = ({
         type={type}
         id={id}
         name={id}
-        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+        className={`${defaultInputClasses} ${inputClassName}`.trim()}
         placeholder={placeholder}
         value={value}
         onChange={onChange}
