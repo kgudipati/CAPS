@@ -97,48 +97,76 @@ const prdStructure = `
 Structure the PRD with the following sections using Markdown headings:
 
 ## 1. Title and Overview
-   - **Title:** [Infer a suitable title]
+   - **Title:** [Infer a suitable title based on the project description]
    - **Author(s):** CAPS Generator
    - **Date Created:** [Current Date]
    - **Date Updated:** [Current Date]
    - **Version:** 1.0
 
 ## 2. Objective / Purpose
-   - [Succinct description of why the product/feature is being built, tied to goals. Example: 'This feature allows users to save articles...']
+   - [Succinctly describe why the product/feature is being built, deriving the purpose from the user's problem statement and features. Tie it to potential user or business goals. Example format: "This feature allows users to {achieve something} which addresses {problem solved} by providing {key feature}, helping to increase {potential business goal like engagement or retention}."]
 
 ## 3. Background / Context
-   - [Contextual info: business drivers, user feedback insights inferred from problem/features, etc.]
+   - [Provide relevant context inferred from the user's input. Consider: What might have led to this project idea? Are there implied business drivers (e.g., solving a common user pain point)? Mention that this PRD is the starting point. Example: "User input indicates a need for {feature} to solve {problem}. Current solutions may be lacking. This document outlines the initial requirements."]
 
 ## 4. Goals and Success Metrics
-   - **Business Goals:** [List 1-2 specific, measurable goals. Example: 'Increase article revisit rate by X%']
-   - **User Goals:** [List 1-2 specific user outcomes. Example: 'Users can easily find saved articles']
-   - **Success Metrics:** [List 1-2 key metrics. Example: 'Article revisit rate', 'Task completion time for finding saved items']
+   - [Define SMART goals based on the project objective.]
+   - **Business Goals:** [List 1-2 specific, measurable business-oriented goals. Example: "Increase user engagement metric X by Y% within Z months after launch." or "Reduce support requests related to {problem} by X%."]
+   - **User Goals:** [List 1-2 specific user-centric goals. Example: "{Target users} can successfully {achieve primary goal related to feature} with minimal friction." or "Reduce the time it takes for users to {perform key action}."]
+   - **Success Metrics:** [List 1-2 key metrics to track goals. Examples: "Daily/Monthly Active Users", "Feature adoption rate", "Task success rate", "User satisfaction score (CSAT/NPS)".]
 
 ## 5. Personas / Target Users
-   - [Describe the target users based on the input. Include a sample User Story or Job-to-be-Done (JTBD). Example: 'As a [Target User Type], I want to [Action related to feature], so I can [Benefit].']
+   - [Describe the target users identified in the input.]
+   - **Primary Persona(s):** [Brief description based on 'Target Users' input, including potential demographics, behaviors, and pain points derived from the 'Problem Solved' input.]
+   - **User Story / JTBD:** [Create a sample user story or Job-To-Be-Done based on the inputs. Example: "As a {Target User Type}, I want to {perform action related to feature}, so that I can {achieve benefit related to solving the problem}."]
 
 ## 6. Scope
-   - **In Scope:** [List key features/aspects definitely included based on input]
-   - **Out of Scope:** [List related items explicitly *not* included. Example: 'Mobile app support', 'Offline access']
+   - [Clearly define what is included and excluded.]
+   - **✅ In Scope:** [List the core features mentioned in the user input as definitely included.]
+   - **❌ Out of Scope:** [List common related items that are NOT included based on the input. Examples: "Mobile application version", "Offline functionality", "Administrator dashboard", "Advanced analytics beyond basic tracking".]
 
 ## 7. Features & Requirements
-   - [For each key feature derived from the 'Key Features' input, create a subsection like:]
+   - [Break down each key feature derived from the 'Key Features' input. Use the following format for each:]
    - ### Feature: [Feature Name]
-     - **User Story / Acceptance Criteria:** [Combine user need with how to verify it's done. Example: 'As a user, I can click a Save button on an article, and it appears in my Reading List.']
-     - **Functional Requirements:** [List specific actions/behaviors]
-     - **Non-Functional Requirements:** [Mention relevant aspects like performance, security if applicable, otherwise state 'N/A']
-     - **Priority:** Must-have (assume core features are must-have)
+     - **User Story:** [Restate the user need for this specific feature. Example: "As a {Target User}, I want to {action enabled by feature} so that {benefit}."]
+     - **Acceptance Criteria:** [List specific, testable criteria. Example:
+       - Given a user is viewing {relevant context},
+       - When the user clicks the '{Feature Action Button}',
+       - Then {observable outcome 1} should happen,
+       - And {observable outcome 2} should happen.]
+     - **Functional Requirements:** [List specific functions the system must perform for this feature.]
+     - **Non-Functional Requirements:** [Mention relevant aspects like usability, performance targets, security considerations, accessibility (WCAG AA), etc., or state 'Standard performance and security apply.']
+     - **Priority:** Must-have (Assume core features described by the user are must-haves for v1.0)
 
 ## 8. User Flows / UX Wireframes
-   - [Describe the key user navigation paths in text. Example: '1. User views article. 2. User clicks Save button. 3. User navigates to Reading List page. 4. User sees saved article.']
-   - *(Note: Actual wireframes are out of scope for AI generation)*
+   - [Describe the primary user flow(s) for achieving the main goal(s) using the features. Focus on the sequence of actions.]
+   - **Example Flow (Saving an Item):**
+     - 1. User navigates to the page containing {item}.
+     - 2. User interacts with the 'Save {item}' button/icon.
+     - 3. System provides visual feedback confirming the save action.
+     - 4. User navigates to their personal '{Saved Items Area Name}'.
+     - 5. User sees the saved {item} listed.
+   - *(Note: Actual wireframes are out of scope for AI generation.)*
 
 ## 9. Technical Considerations
-   - **Tech Stack:** [Summarize the provided or inferred tech stack]
-   - **APIs / Integrations:** [Mention any implied third-party needs or internal APIs]
-   - **Data / Database:** [Mention key data entities based on features]
-   - **Security:** [Mention basic security points like authentication, input validation if relevant]
-   - **Performance:** [Mention basic expectations like 'responsive UI' if relevant]
+   - [Outline technical aspects based on user input or inferred best practices.]
+   - **Tech Stack Summary:** [Summarize the tech stack provided in {techStackInfo}. If none provided, state 'To be determined, consider standard web technologies like React/Next.js, Node.js, PostgreSQL.']
+   - **APIs / Integrations:** [Mention any potential third-party APIs needed (e.g., for payments, authentication) or if internal APIs will be built. If none apparent, state 'N/A initially.']
+   - **Data / Database:** [Describe key data entities needed based on features (e.g., User, {Primary Item}). Mention potential database choice if provided in stack, otherwise suggest a common one.]
+   - **Security Considerations:** [Mention standard points: Authentication/Authorization required, Input validation, Protection against common web vulnerabilities (XSS, CSRF).]
+   - **Performance Needs:** [Mention general expectations: Responsive UI, Reasonable API response times under expected load.]
+   - **Example Detail:** [If relevant, add specifics like: "Will leverage {specific library/service} for {purpose}. Data will be stored in {database type} with access restricted by user ID."]
+
+## 10. Risks & Assumptions
+   - [List potential risks or assumptions based on the project description.]
+   - **Assumptions:** [Example: "Assumes users have modern web browsers.", "Assumes users are logged in for personalized features."]
+   - **Risks:** [Example: "Risk of scope creep if {related feature} is added.", "Risk of user adoption if the UX for {key feature} is unclear."]
+
+## 11. Dependencies
+   - [List any known external or internal dependencies.]
+   - **External:** [Example: "Availability of {Third-party API}", "Legal review of privacy policy."]
+   - **Internal:** [Example: "Requires completion of the shared authentication service."]
+   - [If no dependencies are apparent from the input, state 'None identified at this stage.']
 `;
 
 // Other spec types can have simpler structures for now
