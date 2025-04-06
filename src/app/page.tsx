@@ -155,27 +155,27 @@ export default function HomePage() {
     }
   };
 
-  // --- Animation Variants (Smoother) ---
+  // --- Animation Variants (Vertical) ---
   const variants = {
     enter: (direction: number) => ({
-      x: direction > 0 ? 500 : -500, // Reduced travel distance
+      y: direction > 0 ? 300 : -300, // Use Y-axis
       opacity: 0
     }),
     center: {
       zIndex: 1,
-      x: 0,
+      y: 0, // Use Y-axis
       opacity: 1
     },
     exit: (direction: number) => ({
       zIndex: 0,
-      x: direction < 0 ? 500 : -500, // Reduced travel distance
+      y: direction < 0 ? 300 : -300, // Use Y-axis
       opacity: 0
     })
   };
 
   const transitionConfig = {
-    x: { type: "spring", stiffness: 150, damping: 25 }, // Softer spring
-    opacity: { duration: 0.4 } // Longer fade
+    y: { type: "spring", stiffness: 150, damping: 25 }, // Animate Y
+    opacity: { duration: 0.4 }
   };
 
   const [direction, setDirection] = React.useState(0);
@@ -194,7 +194,7 @@ export default function HomePage() {
       switch (store.currentStep) {
           case 0:
               return (
-                  <div className="space-y-6"> {/* Increased spacing */}
+                  <div className="space-y-8">
                       <TextAreaInput
                           label="Describe your project idea in a paragraph"
                           id="projectDescription"
@@ -203,14 +203,13 @@ export default function HomePage() {
                           required
                           placeholder="E.g., A web application for tracking daily water intake..."
                           rows={5}
-                          // Updated styling for readability
-                          wrapperClassName="mb-0" // Remove default margin from wrapper
+                          wrapperClassName="mb-0"
                           labelClassName="text-slate-300"
                           className="bg-slate-700 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 rounded-md"
                       />
                       <fieldset>
                           <legend className="block text-sm font-medium text-slate-300 mb-3">Select AI Provider</legend>
-                          <div className="flex flex-wrap gap-x-6 gap-y-4"> {/* Increased gap */}
+                          <div className="flex flex-wrap gap-x-8 gap-y-4">
                               {(['openai', 'google', 'anthropic'] as AIProvider[]).map((provider) => (
                                   <div key={provider} className="flex items-center">
                                       <input
@@ -220,7 +219,6 @@ export default function HomePage() {
                                           value={provider}
                                           checked={store.selectedAIProvider === provider}
                                           onChange={handleProviderChange}
-                                          // Updated styling
                                           className="focus:ring-indigo-500 h-4 w-4 text-indigo-400 bg-slate-600 border-slate-500 rounded-full"
                                       />
                                       <label htmlFor={provider} className="ml-2 block text-sm font-medium text-slate-200 capitalize">
@@ -234,7 +232,7 @@ export default function HomePage() {
               );
           case 1:
               return (
-                  <div className="space-y-6"> {/* Increased spacing */}
+                  <div className="space-y-8">
                       <TextAreaInput
                           label="What problem(s) does it solve for users?"
                           id="problemStatement"
@@ -263,7 +261,7 @@ export default function HomePage() {
               );
            case 2:
               return (
-                  <div className="space-y-6"> {/* Increased spacing */}
+                  <div className="space-y-8">
                       <TextAreaInput
                           label="What features will users have access to?"
                           id="features"
@@ -280,10 +278,10 @@ export default function HomePage() {
               );
            case 3: // Use BadgeInput for Tech Stack
               return (
-                  <div className="space-y-6">
+                  <div className="space-y-8">
                     <h3 className="text-lg font-medium text-slate-200 mb-1">Technology Stack (Optional)</h3>
                     <p className="text-sm text-slate-400 mb-4">Select or type technologies you plan to use.</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
                        <BadgeInput
                             label="Frontend"
                             id="tech-frontend"
@@ -292,7 +290,7 @@ export default function HomePage() {
                             onAdd={(item) => handleAddTechItem('frontend', item)}
                             onRemove={(item) => handleRemoveTechItem('frontend', item)}
                             placeholder="e.g., React, Next.js"
-                            labelClassName="!mb-1.5" // Adjust label margin
+                            labelClassName="!mb-1.5"
                             wrapperClassName="mb-0"
                        />
                        <BadgeInput
@@ -344,17 +342,16 @@ export default function HomePage() {
               );
            case 4:
               return (
-                  <div className="space-y-6"> {/* Increased spacing */}
+                  <div className="space-y-8">
                     <h3 className="text-lg font-medium text-slate-200 mb-2">Generation Options</h3>
-                    <div className="space-y-6"> {/* Increased spacing */}
+                    <div className="space-y-8">
                       <CheckboxGroup
                         legend="Generate Rules?"
                         options={generationOptions.rules}
                         selectedValues={store.generationOptions.rules ? [generationOptions.rules[0].id] : []}
                         onChange={(id, checked) => handleGenerationOptionChange('rules', id, checked)}
-                        // Updated styling
                         fieldsetClassName="mb-0"
-                        legendClassName="text-slate-300 !mb-3" // override default mb
+                        legendClassName="text-slate-300 !mb-3"
                         labelClassName="text-slate-200"
                         checkboxClassName="bg-slate-600 border-slate-500 text-indigo-400 focus:ring-indigo-500 rounded"
                       />
@@ -366,7 +363,6 @@ export default function HomePage() {
                           .map(([key]) => specKeyToOptionIdMap[key as keyof GenerationOptions['specs']])
                           .filter(id => !!id)}
                         onChange={(id, checked) => handleGenerationOptionChange('specs', id, checked)}
-                         // Updated styling
                         fieldsetClassName="mb-0"
                         legendClassName="text-slate-300 !mb-3"
                         labelClassName="text-slate-200"
@@ -377,7 +373,6 @@ export default function HomePage() {
                         options={generationOptions.checklist}
                         selectedValues={store.generationOptions.checklist ? [generationOptions.checklist[0].id] : []}
                         onChange={(id, checked) => handleGenerationOptionChange('checklist', id, checked)}
-                         // Updated styling
                         fieldsetClassName="mb-0"
                         legendClassName="text-slate-300 !mb-3"
                         labelClassName="text-slate-200"
@@ -391,40 +386,37 @@ export default function HomePage() {
   };
 
   return (
-    // Updated main container styling
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-slate-200 flex flex-col items-center justify-center p-4 font-sans">
-      <header className="w-full max-w-2xl mb-8"> {/* Increased margin */}
-        <h1 className="text-3xl font-bold text-slate-100 text-left">CAPS</h1> {/* Increased size */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-slate-200 p-6 sm:p-8 font-sans">
+      <header className="w-full mb-8">
+        <h1 className="text-3xl font-bold text-slate-100">CAPS</h1>
       </header>
 
-      {/* Updated main card styling */}
-      <main className="w-full max-w-2xl p-10 bg-slate-800/60 backdrop-blur-sm rounded-xl shadow-2xl relative overflow-hidden ring-1 ring-white/10" style={{ minHeight: '480px' }}>
+      <main className="w-full max-w-4xl mx-auto p-12 bg-slate-800/60 backdrop-blur-sm rounded-xl shadow-2xl relative ring-1 ring-white/10 mb-6">
 
         {store.error && (
-          // Adjusted error styling
           <div className="absolute top-0 left-0 right-0 bg-red-500/30 border-b border-red-500/50 text-red-100 px-4 py-2 text-sm z-20 flex items-center justify-center" role="alert">
             <span className="font-semibold mr-2">Error:</span> {store.error}
           </div>
         )}
 
-        <AnimatePresence initial={false} custom={direction}>
-          <motion.div
-            key={store.currentStep} // Key change triggers animation
-            custom={direction}
-            variants={variants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={transitionConfig} // Use updated transition config
-            // Adjusted padding for error message space
-            className={`absolute top-0 left-0 w-full h-full p-10 ${store.error ? 'pt-16' : 'pt-10'}`}
-          >
-            {renderStepContent()}
-          </motion.div>
-        </AnimatePresence>
+        <div className={`relative ${store.error ? 'pt-6' : ''}`}>
+            <AnimatePresence initial={false} custom={direction}>
+              <motion.div
+                key={store.currentStep}
+                custom={direction}
+                variants={variants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={transitionConfig}
+                className="min-h-[350px]"
+              >
+                {renderStepContent()}
+              </motion.div>
+            </AnimatePresence>
+        </div>
 
-        {/* Navigation Buttons */}
-        <div className="absolute bottom-8 left-10 right-10 flex justify-between items-center z-10"> {/* Increased bottom padding */}
+        <div className="mt-8 pt-6 border-t border-slate-700/50 flex justify-between items-center z-10">
           {store.currentStep > 0 ? (
             <button
               onClick={() => paginate(-1)}
@@ -433,11 +425,10 @@ export default function HomePage() {
             >
               Previous
             </button>
-          ) : <div /> /* Placeholder */}
+          ) : <div />}
 
           <button
             onClick={() => store.currentStep === TOTAL_STEPS - 1 ? handleSubmit(new Event('submit') as any) : paginate(1)}
-            // Updated button styling
             className={`bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-60 disabled:bg-indigo-800/50 disabled:cursor-not-allowed transition duration-150 ease-in-out shadow-md ${store.isLoading ? 'animate-pulse' : ''}`}
             disabled={store.isLoading}
           >
@@ -449,12 +440,10 @@ export default function HomePage() {
 
       </main>
 
-      {/* Progress Indicator Styling */}
-      <div className="flex justify-center space-x-3 mt-6"> {/* Increased spacing/margin */}
+      <div className="w-full max-w-4xl mx-auto flex justify-center space-x-3 mt-6">
         {[...Array(TOTAL_STEPS)].map((_, i) => (
           <div
             key={i}
-            // Nicer progress dots
             className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${store.currentStep === i ? 'bg-indigo-400' : 'bg-slate-600 hover:bg-slate-500'}`}
           />
         ))}
