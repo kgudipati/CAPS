@@ -1,62 +1,121 @@
 import { ChatOpenAI } from "@langchain/openai";
-import { HumanMessage } from "@langchain/core/messages";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { ChatAnthropic } from "@langchain/anthropic";
+import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { PromptTemplate } from "@langchain/core/prompts";
 
-/**
- * Calls the OpenAI API via LangChain to generate content based on a prompt template and input variables.
- *
- * @param promptTemplateString The template string with placeholders (e.g., "Tell me about {topic}.").
- * @param inputVariables An object containing values for the placeholders in the template.
- * @param apiKey OpenAI API Key.
- * @returns The generated text content.
- * @throws Throws an error if the API call fails or returns an error.
- */
-export async function generateContentLangChain(promptTemplateString: string, inputVariables: Record<string, any>, apiKey: string): Promise<string> {
-    const model = process.env.AI_MODEL || 'gpt-3.5-turbo'; // Or your preferred model
-    const temperature = 0.7; // Adjust as needed
+// Helper function to select the LLM based on environment variables
+function getLlm(): {
+    llm: BaseChatModel;
+    providerName: string;
+    modelName: string;
+} {
+    const provider = process.env.AI_PROVIDER?.toLowerCase();
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+    const googleApiKey = process.env.GOOGLE_API_KEY;
+    const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
 
-    console.log(`Invoking LangChain OpenAI model ${model}...`);
+    const temperature = 0.7; // Common setting
+
+    if (provider === 'anthropic' || (!provider && anthropicApiKey)) {
+        if (!anthropicApiKey) throw new Error("ANTHROPIC_API_KEY is required for Anthropic provider.");
+        const modelName = process.env.CLAUDE_MODEL_NAME || "claude-3-sonnet-20240229";
+        console.log(`Using Anthropic provider with model ${modelName}`);
+        return {
+            llm: new ChatAnthropic({
+                anthropicApiKey: anthropicApiKey,
+                modelName: modelName,
+                temperature: temperature,
+            }),
+            providerName: "Anthropic",
+            modelName: modelName
+        };
+    } else if (provider === 'google' || (!provider && googleApiKey)) {
+        if (!googleApiKey) throw new Error("GOOGLE_API_KEY is required for Google provider.");
+        const modelName = process.env.GEMINI_MODEL_NAME || "gemini-pro";
+        console.log(`Using Google provider with model ${modelName}`);
+        return {
+            llm: new ChatGoogleGenerativeAI({
+                apiKey: googleApiKey,
+                model: modelName,
+                temperature: temperature,
+                // safetySettings: [], // Optional: Adjust safety settings if needed
+            }),
+            providerName: "Google",
+            modelName: modelName
+        };
+    } else if (provider === 'openai' || (!provider && openaiApiKey) || provider === undefined) {
+        // Default to OpenAI if explicitly set, key is present, or no provider specified
+        if (!openaiApiKey) throw new Error("OPENAI_API_KEY is required for OpenAI provider (or as default). Please set OPENAI_API_KEY, GOOGLE_API_KEY, or ANTHROPIC_API_KEY.");
+        const modelName = process.env.OPENAI_MODEL_NAME || "gpt-3.5-turbo";
+        const baseURL = process.env.OPENAI_API_BASE; // Support for custom base URL / proxy
+        console.log(`Using OpenAI provider with model ${modelName}${baseURL ? ` at ${baseURL}` : ''}`);
+        return {
+            llm: new ChatOpenAI({
+                apiKey: openaiApiKey,
+                modelName: modelName,
+                temperature: temperature,
+                configuration: baseURL ? { baseURL } : undefined,
+            }),
+            providerName: "OpenAI",
+            modelName: modelName
+        };
+    } else {
+        throw new Error(`Unsupported AI_PROVIDER specified: ${provider}. Supported: openai, google, anthropic (or leave unset and provide a valid API key).`);
+    }
+}
+
+/**
+ * Calls the configured AI provider via LangChain to generate content based on a prompt template and input variables.
+ *
+ * @param promptTemplateString The template string with placeholders.
+ * @param inputVariables An object containing values for the placeholders.
+ * @returns The generated text content.
+ * @throws Throws an error if configuration is missing, API call fails, or returns an error.
+ */
+export async function generateContentLangChain(promptTemplateString: string, inputVariables: Record<string, any>): Promise<string> {
+    let llm: BaseChatModel;
+    let providerName: string;
+    let modelName: string;
 
     try {
-        const llm = new ChatOpenAI({
-            apiKey: apiKey,
-            modelName: model,
-            temperature: temperature,
-            // You can add other configurations like maxTokens if needed
-        });
+        ({ llm, providerName, modelName } = getLlm());
+    } catch (configError) {
+        console.error("LLM Configuration Error:", configError);
+        if (configError instanceof Error) {
+           throw new Error(`AI Configuration Error: ${configError.message}`);
+        }
+         throw new Error("Unknown AI Configuration Error.");
+    }
 
-        // Create a prompt template from the string
+    console.log(`Invoking ${providerName} model ${modelName} via LangChain...`);
+
+    try {
         const prompt = PromptTemplate.fromTemplate(promptTemplateString);
-
-        // Define the output parser
         const outputParser = new StringOutputParser();
-
-        // Create the chain
         const chain = prompt.pipe(llm).pipe(outputParser);
-
-        // Invoke the chain with the input variables
         const result = await chain.invoke(inputVariables);
 
-        if (!result) {
+        if (result === undefined || result === null) {
             throw new Error("AI generation failed: No content received from the chain.");
         }
 
-        console.log("LangChain generation successful.");
+        console.log(`LangChain generation successful using ${providerName}.`);
         return result.trim();
 
     } catch (error) {
-        console.error('Error calling LangChain OpenAI:', error);
+        console.error(`Error calling LangChain ${providerName}:`, error);
         if (error instanceof Error) {
-            // Try to provide a more specific error if possible
-            if (error.message.includes("Incorrect API key")) {
-                throw new Error("AI API call failed: Incorrect API Key provided.");
+            // Pass specific errors up
+            if (error.message.includes("Incorrect API key") || error.message.includes("API key invalid")) {
+                 throw new Error(`AI API call failed: Incorrect API Key provided for ${providerName}.`);
             } else if (error.message.includes("quota")) {
-                 throw new Error("AI API call failed: API Quota exceeded.");
+                 throw new Error(`AI API call failed: API Quota exceeded for ${providerName}.`);
             }
-            throw new Error(`AI API call failed via LangChain: ${error.message}`);
+            throw new Error(`AI API call failed via LangChain (${providerName}): ${error.message}`);
         }
-        throw new Error('An unknown error occurred while calling the AI API via LangChain.');
+        throw new Error(`An unknown error occurred while calling the ${providerName} AI API via LangChain.`);
     }
 }
 

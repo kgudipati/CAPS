@@ -44,12 +44,6 @@ export async function POST(request: Request) {
   const requestBody: ProjectInputData = validationResult.data;
   console.log('Request body validated successfully:', requestBody);
 
-  const apiKey = process.env.AI_API_KEY;
-  if (!apiKey) {
-    console.error('AI_API_KEY environment variable is not set.');
-    return NextResponse.json({ error: 'Server configuration error: AI API key missing.' }, { status: 500 });
-  }
-
   try {
     const filesToZip: FileData[] = [];
     const generationPromises: Promise<void>[] = [];
@@ -70,7 +64,7 @@ export async function POST(request: Request) {
         generationPromises.push((async () => {
             try {
                 const inputVars = getProjectRulesInput(requestBody);
-                const content = await generateContentLangChain(projectRulesTemplate, inputVars, apiKey);
+                const content = await generateContentLangChain(projectRulesTemplate, inputVars);
                 filesToZip.push({ path: '.cursor/rules/project-specific-rules.mdc', content: content });
                 console.log('Project-specific rules generated.');
             } catch (err) {
@@ -87,7 +81,7 @@ export async function POST(request: Request) {
                 try {
                     const inputVars = getSpecInput(key, requestBody);
                     // The specTemplate already includes BEGIN/END markers and structure details
-                    const content = await generateContentLangChain(specTemplate, inputVars, apiKey);
+                    const content = await generateContentLangChain(specTemplate, inputVars);
 
                     // Extract content between markers (optional, but cleaner)
                     const match = content.match(/--- BEGIN .*? ---\n?([\s\S]*?)\n?--- END .*? ---/);
@@ -116,7 +110,7 @@ export async function POST(request: Request) {
         generationPromises.push((async () => {
             try {
                 const inputVars = getChecklistInput(requestBody);
-                const content = await generateContentLangChain(checklistTemplate, inputVars, apiKey);
+                const content = await generateContentLangChain(checklistTemplate, inputVars);
                 filesToZip.push({ path: 'checklist.md', content: content });
                 console.log('Checklist generated.');
             } catch (err) {
@@ -154,8 +148,9 @@ export async function POST(request: Request) {
     console.error('Error during starter kit generation:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     let clientErrorMessage = 'Failed to generate starter kit. An internal error occurred.';
-    if (errorMessage.includes("AI API call failed")) {
-        // Provide more specific feedback based on LangChain error messages
+    if (errorMessage.includes("AI Configuration Error")) {
+        clientErrorMessage = errorMessage;
+    } else if (errorMessage.includes("AI API call failed")) {
         if (errorMessage.includes("Incorrect API Key")) {
              clientErrorMessage = "AI Error: Incorrect API Key provided.";
         } else if (errorMessage.includes("Quota exceeded")) {

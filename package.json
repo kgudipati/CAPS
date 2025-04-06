@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@langchain/anthropic": "^0.3.16",
+    "@langchain/google-genai": "^0.2.2",
     "@langchain/openai": "^0.5.4",
     "jszip": "^3.10.1",
     "langchain": "^0.3.20",
