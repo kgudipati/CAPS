@@ -1,6 +1,11 @@
 ---
-description: 
-globs: 
+description: Enforces consistent and effective logging practices for easier debugging.
+globs: ["*.py", "*.ts", "*.tsx", "*.js", "*.jsx"]
 alwaysApply: false
 ---
- 
+Implement consistent logging practices throughout the application.
+
+- Use structured logging (e.g., JSON format) where possible to facilitate parsing and analysis.
+- Ensure logs provide sufficient context (e.g., relevant IDs, function names, input parameters) for debugging issues across different environments (development, staging, production).
+- Avoid logging sensitive information (PII, passwords, API keys).
+- Use appropriate log levels (e.g., DEBUG, INFO, WARN, ERROR) to categorize messages. 

@@ -1,1 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
 Utilize Multi-Context Prompting (MCP) tools within Cursor when appropriate for tasks like code generation, explanation, refactoring, or running commands. Understand the capabilities and limitations of available MCP tools to use them effectively. 

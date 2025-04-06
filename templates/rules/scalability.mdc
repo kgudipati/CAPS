@@ -1,6 +1,12 @@
 ---
-description: 
-globs: 
+description: Guides development towards scalable and maintainable code architecture.
+globs: ["*.py", "*.ts", "*.tsx", "*.js", "*.jsx"]
 alwaysApply: false
 ---
- 
+Design and write code with scalability and maintainability in mind.
+
+- **Modularity:** Build small, reusable components, functions, and modules with well-defined responsibilities.
+- **Configuration:** Externalize configuration values (API keys, database URLs, feature flags) instead of hardcoding them.
+- **Performance:** Be mindful of potential bottlenecks (e.g., database queries, complex computations, excessive network requests). Consider asynchronous operations where appropriate.
+- **Statelessness:** Prefer stateless components/services where possible, managing state explicitly when needed.
+- **Follow Stack Best Practices:** Adhere to recommended patterns and practices for scalability within your chosen frameworks and technologies (e.g., serverless patterns, efficient data fetching). 

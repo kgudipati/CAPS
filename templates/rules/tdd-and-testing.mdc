@@ -1,6 +1,12 @@
 ---
-description: 
-globs: 
+description: Encourages Test-Driven Development (TDD) and comprehensive testing.
+globs: ["*.py", "*.ts", "*.tsx", "*.js", "*.jsx", "*test*", "*spec*"]
 alwaysApply: false
 ---
- 
+Employ Test-Driven Development (TDD) principles where practical.
+
+- Write unit tests for core logic, helper functions, and individual components.
+- Aim for good test coverage to ensure reliability.
+- Include integration tests for critical user workflows and interactions between components or services.
+- Ensure tests are maintainable and run automatically in CI/CD pipelines.
+- Use descriptive test names that clearly state the intent and expected outcome. 

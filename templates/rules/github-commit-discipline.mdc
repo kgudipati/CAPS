@@ -1,6 +1,14 @@
 ---
-description: 
-globs: 
+description: Enforces structured and meaningful Git commit messages and practices.
+globs: ["*"] # Applies conceptually to the Git process
 alwaysApply: false
 ---
- 
+Follow structured commit message conventions (e.g., Conventional Commits: `<type>(<scope>): <description>`).
+
+- **Keep commits atomic:** Each commit should represent a single logical change (e.g., fix a bug, add a feature, refactor a component).
+- **Write clear commit messages:**
+    - Use the imperative mood in the subject line (e.g., "Add feature" not "Added feature").
+    - Limit the subject line to ~50-72 characters.
+    - Provide a more detailed commit body if the change requires explanation (the *why*, not just the *what*).
+- **Push code frequently:** Push changes after completing specific, verifiable tasks or fixes.
+- **Use meaningful branch names:** Branches should clearly indicate their purpose (e.g., `feat/user-auth`, `fix/payment-bug`). 
