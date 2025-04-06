@@ -169,9 +169,183 @@ Structure the PRD with the following sections using Markdown headings:
    - [If no dependencies are apparent from the input, state 'None identified at this stage.']
 `;
 
-// Other spec types can have simpler structures for now
+// --- NEW: Specific prompt details for Technical Specification ---
+const technicalSpecStructure = `
+Structure the Technical Specification with the following sections using Markdown headings:
+
+## 1. Overview / Summary
+   - [Provide a brief summary (1-2 paragraphs) of the system or feature being designed, referencing the main goals from the project description or PRD.]
+   - Example: "This specification outlines the backend services, APIs, and database schema required to implement the {feature name} feature..."
+
+## 2. System Architecture
+   - [Describe the high-level architecture. Explain how the main components (frontend, backend services, databases, external APIs) interact for this feature/system. A simple text description is sufficient; Mermaid diagrams can be added later if needed.]
+   - Example: "The React frontend will call a new Node.js backend API endpoint. This endpoint will interact with the PostgreSQL database to retrieve/update user data. User authentication is handled by a separate existing Auth service."
+
+## 3. Tech Stack
+   - [List the specific technologies used or changed for this project/feature, based on {techStackInfo}. If not specified, suggest a standard stack.]
+   - **Frontend:** [e.g., React, Next.js, Zustand, Tailwind CSS]
+   - **Backend:** [e.g., Node.js, Express, NestJS]
+   - **Database:** [e.g., PostgreSQL, Redis (for caching)]
+   - **Infrastructure:** [e.g., Docker, Vercel, AWS S3]
+   - **Other:** [e.g., Stripe API, Sentry (for logging)]
+
+## 4. API Design (if applicable)
+   - [Define any new or significantly modified API endpoints required for the features. Use a clear format for each.]
+   - ### POST /api/{resource-name}
+     - **Description:** [What the endpoint does, e.g., Creates a new {resource}]
+     - **Authentication:** [Required (e.g., JWT Bearer Token) / None]
+     - **Request Body:** [Describe JSON payload structure, e.g., { "field": "string", "count": "number" }]
+     - **Validation:** [Mention key validation rules, e.g., "field is required, count must be > 0"]
+     - **Response (Success - e.g., 201 Created):** [Describe success response body, e.g., { "id": "string", "message": "Created successfully" }]
+     - **Response (Error - e.g., 400 Bad Request, 401 Unauthorized, 404 Not Found, 500 Server Error):** [Describe potential error responses.]
+   - [Repeat for other endpoints (GET, PUT, DELETE etc.) as needed.]
+   - [If no new APIs, state "No new API endpoints required; existing APIs will be used."]
+
+## 5. Data Model / Schema Changes
+   - [Detail new or modified database tables, fields, relationships, or indexes based on the features and data requirements.]
+   - **New Table: `{table_name}`**
+     - `id`: [Type, e.g., UUID PRIMARY KEY]
+     - `user_id`: [Type, e.g., UUID, REFERENCES users(id)]
+     - `{field_name}`: [Type, e.g., VARCHAR(255), TIMESTAMP, BOOLEAN DEFAULT false]
+     - `created_at`: [Type, e.g., TIMESTAMP DEFAULT NOW()]
+   - **Modified Table: `{existing_table}`**
+     - **Add column:** `{new_column}` [Type, Constraints]
+     - **Modify column:** `{column_name}` [New type or constraints]
+   - **Indexes:** [Mention any new indexes needed, e.g., "Add index on `user_id` in `{table_name}`"]
+   - [If no DB changes, state "No database schema changes required."]
+
+## 6. Business Logic & Workflow
+   - [Describe the core logic for the main features/operations. Pseudocode or step-by-step descriptions are helpful.]
+   - **Example (Saving an Item):**
+     - 1. Receive request data (userId, itemId) at API endpoint.
+     - 2. Validate input (non-empty IDs, check user auth).
+     - 3. Query database: Check if item already saved by this user.
+     - 4. IF exists, return {conflict/already saved error}.
+     - 5. ELSE Insert new record into `saved_items` table (userId, itemId).
+     - 6. IF insert successful, return {success message}.
+     - 7. ELSE return {database error}.
+
+## 7. Frontend Integration Points
+   - [Describe how the frontend interacts with the backend for this feature.]
+   - **API Calls:** [Which new/existing API endpoints will the frontend call?]
+   - **State Management:** [How will related frontend state be managed (e.g., using Zustand store, component state)?]
+   - **Authentication:** [How will frontend pass credentials/tokens?]
+   - **Error Handling:** [How should frontend display API errors?]
+   - **Loading States:** [How should loading states be handled during API calls?]
+
+## 8. Security & Compliance Requirements
+   - [Address key security aspects.]
+   - **Authentication/Authorization:** [Confirm if endpoints require login. Mention specific roles if applicable.]
+   - **Input Validation:** [Reiterate that backend validates all input from client/API.]
+   - **Data Encryption:** [Specify if encryption needed (e.g., "Standard TLS for data in transit. Sensitive fields encrypted at rest if applicable.")]
+   - **PII Handling:** [Address if Personally Identifiable Information is handled and how (e.g., "Minimize storage, apply masking/encryption as needed.")]
+   - **Dependencies:** [Mention reliance on specific auth libraries/services.]
+
+## 9. Performance & Scalability Considerations
+   - [Outline performance goals and strategies.]
+   - **Expected Load:** [Briefly estimate usage (e.g., Low, Medium, High traffic expected initially).]
+   - **Caching:** [Identify opportunities for caching (e.g., "Cache user profile data in Redis for 1 hour.")]
+   - **Database:** [Mention indexing strategies (covered in Data Model) or potential need for read replicas if high load expected.]
+   - **Asynchronous Operations:** [Identify if any tasks should be handled async (e.g., sending emails, complex background processing).]
+
+## 10. Analytics & Logging
+   - [Define what needs to be tracked.]
+   - **Logging:** [Specify key events/errors to log (e.g., "Log API request/response summaries, log critical errors with stack traces"). Mention target (e.g., Console, Datadog).]
+   - **Monitoring:** [What key metrics should be monitored? (e.g., "API latency, error rates (4xx, 5xx), database connection pool usage").]
+   - **Alerting:** [On what conditions should alerts be triggered? (e.g., "Alert on sustained high error rate > 5%").]
+
+## 11. Testing Plan
+   - [Outline the testing approach.]
+   - **Unit Tests:** [Cover critical business logic, helper functions, API validation.]
+   - **Integration Tests:** [Test interaction between API, service layer, and database.]
+   - **API Contract Tests:** [Verify API request/response structure.]
+   - **End-to-End (E2E) Tests:** [Optional, cover key user flows if feasible.]
+   - **Load Tests:** [Mention if planned for performance-critical endpoints.]
+
+## 12. Deployment Plan
+   - [Describe how the feature/system will be released.]
+   - **Environments:** [Confirm deployment through dev/staging/prod.]
+   - **CI/CD:** [Assume standard CI/CD pipeline handles build/test/deploy.]
+   - **Rollout Strategy:** [Default: Standard deployment. Mention feature flags, canary, or blue-green if planned.]
+   - **Rollback:** [Confirm rollback procedure exists (e.g., "Revert commit and redeploy previous version via CI/CD").]
+
+## 13. Migration Plan (if applicable)
+   - [Detail steps if existing data needs migration.]
+   - **Scripts:** [Describe necessary data migration scripts.]
+   - **Process:** [Outline deployment steps for migration (e.g., "Run script before deploying new code").]
+   - **Validation:** [How to verify migration success?]
+   - **Rollback:** [How to roll back migration if needed?]
+   - [If not applicable, state "No data migration required."]
+
+## 14. Dependencies
+   - [List external or internal dependencies.]
+   - **External:** [e.g., "{Third-party Service} API must be available."]
+   - **Internal:** [e.g., "Requires deployment of updated {Shared Library}", "Depends on {Team Name} completing {Related Task}".]
+   - [If none apparent, state "None identified at this stage."]
+`;
+
+// Define example structures for other specs to avoid complex inline strings
+const tpsExampleStructure = `
+Examples sections for TPS:
+- Test Objectives
+- Scope (In/Out)
+- Test Strategy (Manual/Automated)
+- Test Cases (ID, Description, Steps, Expected Result)
+- Test Data Requirements
+- Environment Requirements
+- Success/Exit Criteria
+`;
+
+const uiUxExampleStructure = `
+Example sections for UI/UX Spec:
+- Design Goals & Principles
+- Key User Flows (Visual - Placeholder)
+- Wireframes/Mockups (Links or Descriptions)
+- Component Library Usage (e.g., Material UI, Shadcn/ui)
+- Accessibility Notes (e.g., WCAG Compliance Level)
+- Interaction Details (e.g., Animations, Loading States)
+`;
+
+const dataExampleStructure = `
+Example sections for Data Spec:
+- Data Sources
+- Detailed Schema Definitions (Tables, Columns, Types, Constraints)
+- Relationships (ERD Description/Placeholder)
+- Data Flow Diagram (Description)
+- Data Validation Rules (Beyond basic types)
+- Data Retention / Deletion Policy
+- PII / Sensitive Data Handling
+`;
+
+const integrationExampleStructure = `
+Example sections for Integration Spec:
+- System Overview (Involved systems)
+- Integrated Systems Details
+- Data Exchange Format (e.g., JSON, XML)
+- API Endpoint Details (Consumed/Exposed)
+- Authentication/Authorization Methods
+- Sequence Diagram (Description/Placeholder)
+- Error Handling Strategy
+- Monitoring & Logging Requirements
+`;
+
+// Updated defaultSpecStructure using the examples above
 const defaultSpecStructure = `
-Structure the {specFocus} with logical sections relevant to its type (e.g., Test Cases for TPS, Component Breakdown for UI/UX, API Endpoints for Technical Spec, Schema Definition for Data Spec, etc.). Use clear Markdown headings.
+Structure the {specFocus} with logical sections relevant to its type. Use clear Markdown headings.
+
+**Examples based on Spec Type:**
+
+*If {specFocus} is Test Plan Specification (TPS):*
+${tpsExampleStructure}
+
+*If {specFocus} is UI/UX Specification:*
+${uiUxExampleStructure}
+
+*If {specFocus} is Data Specification:*
+${dataExampleStructure}
+
+*If {specFocus} is Integration Specification:*
+${integrationExampleStructure}
 `;
 
 // Combine base, structure, and end prompts
@@ -188,18 +362,37 @@ interface SpecInput extends ProjectBaseInput {
 // Function to get the input object for spec generation
 export function getSpecInput(specType: keyof ProjectInputData['generationOptions']['specs'], inputs: ProjectInputData): SpecInput {
     let specFocus = "";
-    let specStructure = defaultSpecStructure;
+    let specStructure = defaultSpecStructure; // Start with default including examples
 
     switch (specType) {
-        case 'prd': specFocus = "Product Requirements Document (PRD)"; specStructure = prdStructure; break;
-        case 'tps': specFocus = "Test Plan Specification (TPS)"; break;
-        case 'uiUx': specFocus = "UI/UX Specification"; break;
-        case 'technical': specFocus = "Technical Specification"; break;
-        case 'data': specFocus = "Data Specification"; break;
-        case 'integration': specFocus = "Integration Specification"; break;
+        case 'prd': 
+            specFocus = "Product Requirements Document (PRD)"; 
+            specStructure = prdStructure; 
+            break;
+        case 'tps': 
+            specFocus = "Test Plan Specification (TPS)"; 
+            // Default structure already includes TPS examples
+            break;
+        case 'uiUx': 
+            specFocus = "UI/UX Specification"; 
+            // Default structure already includes UI/UX examples
+            break;
+        case 'technical': 
+            specFocus = "Technical Specification"; 
+            specStructure = technicalSpecStructure; 
+            break;
+        case 'data': 
+            specFocus = "Data Specification"; 
+            // Default structure already includes Data examples
+            break;
+        case 'integration': 
+            specFocus = "Integration Specification"; 
+            // Default structure already includes Integration examples
+            break;
     }
 
-    // Replace placeholder in structure templates
+    // Replace placeholder in the chosen structure template
+    // This needs to happen *after* selecting PRD/Technical or keeping default
     specStructure = specStructure.replace(/{specFocus}/g, specFocus);
 
     return {
