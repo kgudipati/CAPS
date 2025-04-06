@@ -403,93 +403,115 @@ Examples sections for TPS:
 - Success/Exit Criteria
 `;
 
-const dataExampleStructure = `
-Example sections for Data Spec:
-- Data Sources
-- Detailed Schema Definitions (Tables, Columns, Types, Constraints)
-- Relationships (ERD Description/Placeholder)
-- Data Flow Diagram (Description)
-- Data Validation Rules (Beyond basic types)
-- Data Retention / Deletion Policy
-- PII / Sensitive Data Handling
+// --- NEW: Specific prompt details for Data Specification ---
+const dataSpecStructure = `
+Structure the Database & Storage Specification with the following sections using Markdown headings:\\n
+## 1. Data Models / Schema
+   - [Define tables, collections, or data structures. Include primary keys, data types, and brief descriptions.]
+   - Example Table:
+     \`\`\`sql
+     CREATE TABLE users (
+         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+         email VARCHAR(255) UNIQUE NOT NULL,
+         hashed_password TEXT NOT NULL,
+         created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now())
+     );
+     \`\`\`
+   - Example Document (NoSQL):
+     \`\`\`json
+     {
+       "_id": "ObjectId(...)",
+       "userId": "UUID",
+       "preferences": { "theme": "dark" },
+       "lastLogin": "ISODate(...)"
+     }
+     \`\`\`
+\\n## 2. Data Types & Constraints
+   - [Detail specific data types, formats (e.g., ISO 8601 for dates), constraints (NOT NULL, UNIQUE, CHECK), and default values.]
+   - Example: \`email\` must be a valid email format and is unique. \`created_at\` defaults to the current UTC timestamp.
+\\n## 3. Relationships
+   - [Describe relationships between data entities (one-to-one, one-to-many, many-to-many). Specify foreign keys and join strategies if applicable.]
+   - Example: \`orders\` table has a \`user_id\` foreign key referencing \`users(id)\` (one-to-many: one user can have many orders).
+\\n## 4. Indexes & Optimization
+   - [List planned indexes beyond primary/foreign keys. Explain the rationale (e.g., speeding up common queries).]
+   - Example: Add index on \`email\` in \`users\` table for faster login lookups. Add composite index on \`(product_id, date)\` in \`sales\` table for reporting queries.
+\\n## 5. Data Retention & Archiving
+   - [Specify policies for how long data is kept and how/if it's archived or deleted.]
+   - Example: User activity logs older than 1 year will be archived to cold storage. Inactive user accounts will be anonymized or deleted after 2 years.
+\\n## 6. Storage Infrastructure
+   - [Describe the underlying storage technology (e.g., PostgreSQL on AWS RDS, MongoDB Atlas, AWS S3).]
+   - Example: Primary database is PostgreSQL 15 managed via AWS RDS. User uploads are stored in AWS S3 in the \`us-east-1\` region.
+\\n## 7. Backups & Restore
+   - [Outline the backup strategy (frequency, retention) and the process for restoring data.]
+   - Example: Daily automated snapshots of the RDS instance, retained for 14 days. Point-in-time recovery enabled. S3 objects have versioning enabled.
+\\n## 8. Migration Strategy (if applicable)
+   - [Describe the plan for migrating existing data or schema changes. Include steps for data transformation and validation.]
+   - Example: Use Flyway/Liquibase for schema migrations. A one-time script will be run to populate the new \`preferences\` field based on existing settings. Downtime expected: ~5 minutes during deployment.
+\\n## 9. Security
+   - [Detail data security measures: encryption (at rest, in transit), access control mechanisms (roles, permissions), auditing.]
+   - Example: Data encrypted at rest using AWS KMS. TLS 1.2+ enforced for data in transit. Access to production database restricted to specific IAM roles. Sensitive PII fields (if any) are encrypted application-side.
+\\n## 10. Access Patterns
+   - [Describe the primary ways data will be read and written. Consider query frequency, data volume, and performance requirements.]
+   - Example: High read frequency for product catalog. Moderate write frequency for user orders. Low frequency for administrative reports. Optimize queries for user profile loading.
+\\n## 11. File/Object Storage Layout (if applicable)
+   - [If using object storage (like S3), describe the bucket structure and naming conventions.]
+   - Example: S3 Bucket: \`my-app-uploads-prod\`. Structure: \`uploads/{user_id}/{yyyy}/{mm}/{dd}/{file_uuid}.{ext}\`.\n
+## 12. Compliance / PII Handling
+   - [Identify any specific compliance requirements (GDPR, HIPAA, etc.) and how Personally Identifiable Information (PII) is handled.]
+   - Example: System designed with GDPR principles. PII identified: email, name. Minimize PII collection and provide user mechanisms for data access/deletion requests. No HIPAA data involved.
 `;
 
-// --- NEW: Specific prompt details for Integration Specification ---
+// --- Corrected: Specific prompt details for Integration Specification ---
 const integrationSpecStructure = `
-Structure the Third-Party Integration Specification with the following sections using Markdown headings:
-
+Structure the Third-Party Integration Specification with the following sections using Markdown headings:\\n
 ## 1. Integration Overview
-   - **Third-Party Service:** [Name of the service being integrated, e.g., Stripe, SendGrid, Twilio]
-   - **Purpose:** [Briefly state what this integration achieves for the project, e.g., "Process payments", "Send transactional emails", "Send SMS notifications"]
-
+   - [Provide a brief overview of the third-party service being integrated and the purpose of the integration.]
+   - Example: Integrate with Stripe for payment processing. Allows users to purchase subscriptions.\n
 ## 2. Use Case(s)
-   - [Describe the specific scenarios or features within your application that trigger or rely on this integration.]
-   - **Example:** "When a user completes an order, their payment details are sent to Stripe to process the transaction.", "When a new user signs up, a welcome email is sent via SendGrid."
-
+   - [Describe the specific scenarios where this integration is used.]
+   - Example: 1. User initiates checkout. 2. User enters payment details via Stripe Elements. 3. Backend confirms payment with Stripe and activates subscription. 4. Handle webhook events from Stripe (e.g., payment succeeded, subscription cancelled).\n
 ## 3. Authentication Method
-   - [Describe how your application authenticates with the third-party service.]
-   - **Method:** [e.g., API Key (Secret Key), OAuth 2.0 (Client Credentials Grant, Authorization Code Grant), Webhook Signatures]
-   - **Key Storage:** [Mention how sensitive credentials like API keys are stored securely (e.g., "Stored in environment variables, accessed only server-side")]
-
+   - [Specify how your application authenticates with the third-party service.]
+   - Example: Using Stripe API Secret Key (restricted permissions) stored securely in environment variables. Authenticate webhook requests using Stripe's signature verification.\n
 ## 4. Endpoints / SDK Methods Used
-   - [List the specific API endpoints or SDK methods of the third-party service that your application will interact with.]
-   - **Example (Stripe - Creating a Payment Intent):**
-     - *Method/Endpoint:* \`POST /v1/payment_intents\` (or SDK equivalent: \`stripe.paymentIntents.create(...)\`)
-     - *Key Parameters Sent:* \`amount\`, \`currency\`, \`customer\`, \`payment_method_types\`
-     - *Key Data Received:* \`id\`, \`client_secret\`, \`status\`
-   - [List other relevant endpoints/methods.]
-
+   - [List the specific API endpoints or SDK functions that will be called.]
+   - Example:\n
+     - Stripe SDK (Node.js): \`stripe.paymentIntents.create(...)\`, \`stripe.customers.create(...)\`, \`stripe.subscriptions.create(...)\`\n
+     - Webhook Handler Endpoint: \`POST /api/webhooks/stripe\`\n
 ## 5. Rate Limits & Quotas
-   - [Document known rate limits or usage quotas for the third-party service.]
-   - **Limits:** [e.g., "100 API calls per second (live mode)", "10,000 emails per month (free tier")]
-   - **Strategy:** [How will your application handle these limits? (e.g., "Implement exponential backoff on rate limit errors", "Monitor usage via provider dashboard", "Cache responses where possible")]
-
+   - [Note the relevant rate limits or quotas imposed by the third-party service.]
+   - Example: Stripe's standard rate limits apply (e.g., 100 read/write operations per second in live mode). Monitor usage via Stripe dashboard.\n
 ## 6. Failure Modes & Retry Strategy
-   - [Describe potential failures and how your application should respond.]
-   - **Timeout:** [What happens if the API call times out? (e.g., "Retry once after 2 seconds. If fails again, log error and notify user/admin")]
-   - **API Errors (e.g., 5xx):** [How are server errors from the third-party handled? (e.g., "Retry with exponential backoff for 5xx errors. Log error.")]
-   - **Invalid Requests (e.g., 4xx):** [How are client-side errors handled? (e.g., "Do not retry 4xx errors. Log error details, potentially flag data as problematic.")]
-   - **Webhook Failures (if applicable):** [How are failures in receiving/processing webhooks handled? (e.g., "Queue failed webhook events for later reprocessing")]
-
+   - [Identify potential failure points (API errors, network issues, webhook delays) and outline the retry logic or fallback mechanisms.]
+   - Example: Use idempotent requests for creating Stripe objects. Implement exponential backoff for retrying failed API calls (up to 3 times). Log errors to Sentry. Have a manual process for reconciling failed payments if automated retries fail. Queue webhook processing to handle potential delays or failures.\n
 ## 7. Data Mapping
-   - [Describe how data fields in your application map to fields in the third-party service, if applicable.]
-   - **Example (User Data):**
-     | Your System Field | Third-Party Field                     | Notes                                 |
-     |-------------------|---------------------------------------|---------------------------------------|
-     | \`user.email\`      | \`stripeCustomer.email\`              | Used for receipts                   |
-     | \`user.id\`         | \`stripeCustomer.metadata.appUserId\` | Link back to internal user ID       |
-
+   - [Describe how data fields map between your system and the third-party service.]
+   - Example:\n
+     | Your System Field | Stripe Object/Field           | Direction    | Notes                               |\n
+     |-------------------|-------------------------------|--------------|-------------------------------------|\n
+     | \`user.id\`         | \`Customer.metadata.userId\`  | Outbound     | Link Stripe Customer to local user  |\n
+     | \`order.total\`     | \`PaymentIntent.amount\`      | Outbound     | Amount in cents                     |\n
+     | \`Subscription.id\` | \`Subscription.id\`           | Inbound/Sync | Store Stripe subscription ID        |\n
+     | \`user.email\`      | \`Customer.email\`            | Outbound     |                                     |\n
 ## 8. Security Considerations
-   - [Outline security measures related to the integration.]
-   - **API Key Security:** [Reiterate secure storage (env vars) and restricted server-side access.]
-   - **Data Sanitization:** [Mention sanitizing data sent *to* the third party.]
-   - **Webhook Security (if applicable):** [Verify webhook signatures to ensure authenticity.]
-   - **Least Privilege:** [Ensure API keys/OAuth scopes grant only necessary permissions.]
+   - [Highlight security measures related to the integration.]
+   - Example: Never log raw API keys. Store keys securely (e.g., AWS Secrets Manager). Validate all webhook data using signatures. Restrict API key permissions to the minimum required. Sanitize any data received from the third party before storing or displaying.
 `;
 
 // Updated defaultSpecStructure using the examples above
 const defaultSpecStructure = `
-Structure the {specFocus} with logical sections relevant to its type. Use clear Markdown headings.
-
-**Examples based on Spec Type:**
-
-*If {specFocus} is Test Plan Specification (TPS):*
-${tpsExampleStructure}
-
-*If {specFocus} is UI/UX Specification:*
-${uiUxSpecStructure}
-
-*If {specFocus} is Data Specification:*
-${dataExampleStructure}
-
-*If {specFocus} is Integration Specification:*
-${integrationSpecStructure}
+Structure the {specFocus} with logical sections relevant to its type. Use clear Markdown headings.\\n
+**Examples based on Spec Type:**\\n
+*If {specFocus} is Product Requirements Document (PRD):*\\n${prdStructure}\\n
+*If {specFocus} is Technical Specification:*\\n${technicalSpecStructure}\\n
+*If {specFocus} is UI/UX Specification:*\\n${uiUxSpecStructure}\\n
+*If {specFocus} is Test Plan Specification (TPS):*\\n${tpsExampleStructure}\\n
+*If {specFocus} is Data Specification:*\\n${dataSpecStructure}\\n
+*If {specFocus} is Integration Specification:*\\n${integrationSpecStructure}
 `;
 
-// Combine base, structure, and end prompts
-export const specTemplate = `${baseSpecPrompt}
-{specStructure}
-${endSpecPrompt}`;
+// Combine base, structure, and end prompts - CORRECTED TEMPLATE LITERAL
+export const specTemplate = `${baseSpecPrompt}\\n{specStructure}\\n${endSpecPrompt}`;
 
 // Define input variables needed for spec generation
 interface SpecInput extends ProjectBaseInput {
@@ -500,7 +522,7 @@ interface SpecInput extends ProjectBaseInput {
 // Function to get the input object for spec generation
 export function getSpecInput(specType: keyof ProjectInputData['generationOptions']['specs'], inputs: ProjectInputData): SpecInput {
     let specFocus = "";
-    let specStructure = defaultSpecStructure;
+    let specStructure = defaultSpecStructure; // Start with default
 
     switch (specType) {
         case 'prd':
@@ -509,7 +531,8 @@ export function getSpecInput(specType: keyof ProjectInputData['generationOptions
             break;
         case 'tps':
             specFocus = "Test Plan Specification (TPS)";
-            // Default structure used
+            // Use default structure template, {specFocus} will be replaced below
+            // specStructure = defaultSpecStructure; // No explicit structure needed, keep default
             break;
         case 'uiUx':
             specFocus = "UI/UX Specification";
@@ -520,16 +543,17 @@ export function getSpecInput(specType: keyof ProjectInputData['generationOptions
             specStructure = technicalSpecStructure;
             break;
         case 'data':
-            specFocus = "Data Specification";
-            // Default structure used
+            specFocus = "Database & Storage Specification"; // Corrected focus name
+            specStructure = dataSpecStructure;
             break;
-        case 'integration':
-            specFocus = "Integration Specification";
+        case 'integration': // Ensure this case exists and assigns the structure
+            specFocus = "Third-Party Integration Specification";
             specStructure = integrationSpecStructure;
             break;
+        // Add cases for other spec types if needed
     }
 
-    // Replace placeholder in the chosen structure template
+    // Replace placeholder in the chosen or default structure template
     specStructure = specStructure.replace(/{specFocus}/g, specFocus);
 
     return {
@@ -538,8 +562,8 @@ export function getSpecInput(specType: keyof ProjectInputData['generationOptions
         features: inputs.features,
         targetUsers: inputs.targetUsers,
         techStackInfo: formatTechStack(inputs.techStack),
-        specFocus: specFocus,
-        specStructure: specStructure,
+        specFocus: specFocus, // Pass the determined focus
+        specStructure: specStructure, // Pass the processed structure string
     };
 }
 
