@@ -1,8 +1,43 @@
 import { NextResponse } from 'next/server';
-import { ProjectInputState, FileData, GenerationOptions } from '@/types';
+import { z } from 'zod';
+import { FileData, GenerationOptions } from '@/types';
 import { readTemplateFile, createZipArchive } from '@/lib/files';
 import { generateContent } from '@/lib/ai';
 import { constructProjectRulesPrompt, constructSpecPrompt, constructChecklistPrompt } from '@/lib/prompts';
+
+// Zod Schema for input validation
+const techStackSchema = z.object({
+  frontend: z.string(),
+  backend: z.string(),
+  database: z.string(),
+  infrastructure: z.string(),
+  other: z.string(),
+});
+
+const generationOptionsSchema = z.object({
+  rules: z.boolean(),
+  specs: z.object({
+    prd: z.boolean(),
+    tps: z.boolean(),
+    uiUx: z.boolean(),
+    technical: z.boolean(),
+    data: z.boolean(),
+    integration: z.boolean(),
+  }),
+  checklist: z.boolean(),
+});
+
+const projectInputSchema = z.object({
+  projectDescription: z.string().min(10, { message: "Project description must be at least 10 characters long." }),
+  problemStatement: z.string().min(10, { message: "Problem statement must be at least 10 characters long." }),
+  features: z.string().min(10, { message: "Features description must be at least 10 characters long." }),
+  targetUsers: z.string().min(10, { message: "Target users description must be at least 10 characters long." }),
+  techStack: techStackSchema,
+  generationOptions: generationOptionsSchema,
+});
+
+// Infer the type from the schema
+type ProjectInputData = z.infer<typeof projectInputSchema>;
 
 const STATIC_RULES = [
   'general-best-practices.mdc',
@@ -15,14 +50,27 @@ const STATIC_RULES = [
 
 export async function POST(request: Request) {
   console.log('Received POST request to /api/generate');
-  let requestBody: Omit<ProjectInputState, 'isLoading' | 'error' | 'apiKey'>;
+  let requestJson;
   try {
-    requestBody = await request.json();
-    console.log('Request body parsed:', requestBody);
+      requestJson = await request.json();
   } catch (error) {
-    console.error('Error parsing request body:', error);
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+      console.error('Error parsing request JSON:', error);
+      return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 });
   }
+
+  // Validate input using Zod
+  const validationResult = projectInputSchema.safeParse(requestJson);
+
+  if (!validationResult.success) {
+      console.error('Input validation failed:', validationResult.error.errors);
+      // Format errors for client
+      const formattedErrors = validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+      return NextResponse.json({ error: `Invalid input: ${formattedErrors}` }, { status: 400 });
+  }
+
+  // Use validated data
+  const requestBody: ProjectInputData = validationResult.data;
+  console.log('Request body validated successfully:', requestBody);
 
   const apiKey = process.env.AI_API_KEY;
   if (!apiKey) {
@@ -56,7 +104,6 @@ export async function POST(request: Request) {
                 console.log('Project-specific rules generated.');
             } catch (err) {
                 console.error('Failed to generate project rules:', err);
-                // Optionally collect errors to report later
             }
         })());
     }
@@ -69,7 +116,6 @@ export async function POST(request: Request) {
                 try {
                     const prompt = constructSpecPrompt(key, requestBody);
                     generatedContent[key] = await generateContent(prompt, apiKey);
-                    // Determine file path based on key
                     let filePath = 'docs/';
                     if (key === 'prd') filePath += 'prd.md';
                     else if (key === 'tps') filePath += 'tps.md';
@@ -77,7 +123,7 @@ export async function POST(request: Request) {
                     else if (key === 'technical') filePath += 'technical-spec.md';
                     else if (key === 'data') filePath += 'data-spec.md';
                     else if (key === 'integration') filePath += 'integration-spec.md';
-                    else return; // Skip if key is somehow invalid
+                    else return;
 
                     filesToZip.push({ path: filePath, content: generatedContent[key] });
                     console.log(`${key} spec generated.`);
@@ -106,19 +152,13 @@ export async function POST(request: Request) {
     console.log(`Waiting for ${generationPromises.length} AI generation tasks...`);
     await Promise.all(generationPromises);
     console.log('All AI generation tasks finished.');
-    // TODO: Check for and potentially report partial failures from generationPromises
 
-    // 4. Create ZIP archive (filesToZip is now populated)
+    // 4. Create ZIP archive
     console.log('Creating ZIP archive...');
-    if (filesToZip.length === STATIC_RULES.length && generationPromises.length > 0) {
-        // Only static files were added, likely due to generation errors or nothing selected
-        // Consider throwing an error or returning a specific message if needed
-        console.warn("No dynamic content was successfully generated or selected.");
-        // If no dynamic content was requested, this is fine.
-        let requestedDynamic = requestBody.generationOptions.rules || requestBody.generationOptions.checklist || Object.values(requestBody.generationOptions.specs).some(v => v);
-        if (requestedDynamic) {
-             return NextResponse.json({ error: 'Failed to generate the selected dynamic content. Please check server logs.' }, { status: 500 });
-        }
+    const requestedDynamic = requestBody.generationOptions.rules || requestBody.generationOptions.checklist || Object.values(requestBody.generationOptions.specs).some(v => v);
+    if (filesToZip.length === STATIC_RULES.length && requestedDynamic && generationPromises.length > 0) {
+        console.warn("No dynamic content was successfully generated or selected despite being requested.");
+        return NextResponse.json({ error: 'Failed to generate the selected dynamic content. Please check server logs.' }, { status: 500 });
     }
 
     const zipBuffer = await createZipArchive(filesToZip);
@@ -136,7 +176,6 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error during starter kit generation:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    // Avoid sending potentially sensitive details like API errors to the client
     let clientErrorMessage = 'Failed to generate starter kit. An internal error occurred.';
     if (errorMessage.includes("AI API call failed")) {
         clientErrorMessage = "Failed to generate content using the provided AI API key. Please verify your key and API endpoint configuration.";
