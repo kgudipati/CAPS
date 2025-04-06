@@ -4,6 +4,7 @@ import React from 'react';
 import TextAreaInput from '@/components/TextAreaInput';
 import CheckboxGroup from '@/components/CheckboxGroup'; // Assuming basic CheckboxGroup for now
 import { useProjectInputStore } from '@/lib/store';
+import { ProjectInputState } from '@/types'; // Import the main state type
 
 // Define options for checkboxes (will need refinement for nested structure)
 const techStackOptions = [
@@ -27,55 +28,84 @@ const generationOptions = {
 };
 
 export default function HomePage() {
-  const {
-    projectDescription,
-    problemStatement,
-    features,
-    targetUsers,
-    // techStack, // Need specific handler for nested state
-    // generationOptions: genOpts, // Need specific handler for nested state
-    isLoading,
-    error,
-    updateField,
-    setLoading,
-    setError,
-    // Add specific update functions when implemented in store
-  } = useProjectInputStore();
+  // Get the entire state and actions
+  const store = useProjectInputStore();
 
-  const handleTextChange = (field: Parameters<typeof updateField>[0]) =>
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      updateField(field, e.target.value);
-    };
-
-  // Placeholder handlers for complex state - needs implementation in store & component
-  const handleTechStackChange = (optionId: string, isChecked: boolean) => {
-    console.log('Tech Stack Change:', optionId, isChecked); // TODO: Implement store logic
-    // Example: updateTechStack(category, updatedItems);
+  const handleTextChange = (field: keyof Pick<ProjectInputState, 'projectDescription' | 'problemStatement' | 'features' | 'targetUsers'>) => (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    store.updateField(field, e.target.value);
   };
 
-  const handleGenerationOptionChange = (type: string, optionId: string, isChecked: boolean) => {
-    console.log('Generation Option Change:', type, optionId, isChecked); // TODO: Implement store logic
-    // Example: updateGenerationOption(type, key, isChecked);
+  // TODO: Implement actual state update logic for checkboxes
+  const handleTechStackChange = (optionId: string, isChecked: boolean) => {
+    console.log('Tech Stack Change:', optionId, isChecked);
+    // store.updateTechStack(...);
+  };
+
+  const handleGenerationOptionChange = (type: 'rules' | 'specs' | 'checklist', optionId: string, isChecked: boolean) => {
+     console.log('Generation Option Change:', type, optionId, isChecked);
+     // store.updateGenerationOption(type, optionId, isChecked);
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setLoading(true);
-    setError(null);
-    console.log('Submitting form...'); // Placeholder for API call
+    store.setLoading(true);
+    store.setError(null);
 
-    // TODO: 1. Get full state from store
-    // TODO: 2. Validate inputs (especially API key - though that moves server-side)
-    // TODO: 3. Make POST request to /api/generate
-    // TODO: 4. Handle response (download zip or show error)
+    // Prepare data for API (pick only necessary fields)
+    const currentState = useProjectInputStore.getState();
+    const formData = {
+        projectDescription: currentState.projectDescription,
+        problemStatement: currentState.problemStatement,
+        features: currentState.features,
+        targetUsers: currentState.targetUsers,
+        techStack: currentState.techStack, // TODO: Ensure this structure is correct/handled by API
+        generationOptions: currentState.generationOptions, // TODO: Ensure this structure is correct/handled by API
+    };
+    console.log('Submitting form data:', formData);
 
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-    // Example error handling
-    // setError("Failed to generate kit. Please try again.");
+      if (!response.ok) {
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (parseError) { /* Ignore */ }
+        throw new Error(errorData?.error || `HTTP error! status: ${response.status} ${response.statusText}`);
+      }
 
-    setLoading(false);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = 'cursor-starter-kit.zip';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+?)"?($|;)/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1];
+        }
+      }
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      console.log('ZIP downloaded successfully');
+
+    } catch (err) {
+        console.error("Form submission error:", err);
+        const message = err instanceof Error ? err.message : 'An unknown error occurred during generation.';
+        store.setError(message);
+    } finally {
+        store.setLoading(false);
+    }
   };
 
   return (
@@ -84,10 +114,10 @@ export default function HomePage() {
         Create Your Cursor Project Starter Kit
       </h1>
 
-      {error && (
+      {store.error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
           <strong className="font-bold">Error: </strong>
-          <span className="block sm:inline">{error}</span>
+          <span className="block sm:inline">{store.error}</span>
         </div>
       )}
 
@@ -97,7 +127,7 @@ export default function HomePage() {
           <TextAreaInput
             label="Describe the project in one paragraph"
             id="projectDescription"
-            value={projectDescription}
+            value={store.projectDescription}
             onChange={handleTextChange('projectDescription')}
             required
             placeholder="E.g., A web application that allows users to track their daily water intake..."
@@ -105,7 +135,7 @@ export default function HomePage() {
           <TextAreaInput
             label="What problem(s) does it solve for users?"
             id="problemStatement"
-            value={problemStatement}
+            value={store.problemStatement}
             onChange={handleTextChange('problemStatement')}
             required
             placeholder="E.g., Users often forget to drink enough water throughout the day..."
@@ -113,7 +143,7 @@ export default function HomePage() {
           <TextAreaInput
             label="What features will users have access to?"
             id="features"
-            value={features}
+            value={store.features}
             onChange={handleTextChange('features')}
             required
             placeholder="E.g., Log water intake, set daily goals, view progress charts, receive reminders..."
@@ -121,7 +151,7 @@ export default function HomePage() {
           <TextAreaInput
             label="Who are the target users?"
             id="targetUsers"
-            value={targetUsers}
+            value={store.targetUsers}
             onChange={handleTextChange('targetUsers')}
             required
             placeholder="E.g., Health-conscious individuals, office workers, people tracking fitness goals..."
@@ -131,11 +161,11 @@ export default function HomePage() {
         <section>
           <h2 className="text-xl font-semibold mb-4 border-b pb-2">Technology Stack (Optional)</h2>
           <p className="text-sm text-gray-600 mb-3">Select the technologies you plan to use, or let the AI decide based on your project description.</p>
-          {/* TODO: Replace with a more structured component for categories (Frontend, Backend, etc.) */}
+          {/* TODO: Implement component and state logic for nested tech stack categories */}
           <CheckboxGroup
             legend="Select Technologies"
             options={techStackOptions}
-            selectedValues={[] /* TODO: Get from store state */} 
+             selectedValues={[] /* Placeholder - Get actual value from store.techStack */} 
             onChange={handleTechStackChange}
           />
         </section>
@@ -143,22 +173,26 @@ export default function HomePage() {
         <section>
           <h2 className="text-xl font-semibold mb-4 border-b pb-2">Generation Options</h2>
           <div className="space-y-4">
+            {/* TODO: Implement component and state logic for generation options */}
             <CheckboxGroup
               legend="Generate Rules?"
               options={generationOptions.rules}
-              selectedValues={[] /* TODO: Get from store state */} 
+               selectedValues={store.generationOptions.rules ? [generationOptions.rules[0].id] : [] /* Placeholder */} 
               onChange={(id, checked) => handleGenerationOptionChange('rules', id, checked)}
             />
              <CheckboxGroup
               legend="Generate Specs?"
               options={generationOptions.specs}
-              selectedValues={[] /* TODO: Get from store state */} 
+               selectedValues={Object.entries(store.generationOptions.specs)
+                .filter(([, v]) => v)
+                .map(([k]) => generationOptions.specs.find(opt => opt.id.includes(k))?.id ?? '')
+                .filter(id => id) /* Placeholder */} 
               onChange={(id, checked) => handleGenerationOptionChange('specs', id, checked)}
             />
              <CheckboxGroup
               legend="Generate Checklist?"
               options={generationOptions.checklist}
-              selectedValues={[] /* TODO: Get from store state */} 
+               selectedValues={store.generationOptions.checklist ? [generationOptions.checklist[0].id] : [] /* Placeholder */} 
               onChange={(id, checked) => handleGenerationOptionChange('checklist', id, checked)}
             />
           </div>
@@ -168,9 +202,9 @@ export default function HomePage() {
           <button
             type="submit"
             className="bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150 ease-in-out"
-            disabled={isLoading}
+            disabled={store.isLoading}
           >
-            {isLoading ? 'Generating...' : 'Create Starter Kit'}
+            {store.isLoading ? 'Generating...' : 'Create Starter Kit'}
           </button>
         </div>
       </form>
