@@ -8,15 +8,23 @@ export type AIProvider = 'openai' | 'google' | 'anthropic';
 const TOTAL_STEPS = 5; // 0: Desc+AI, 1: Prob+Users, 2: Features, 3: Stack, 4: GenOpts
 
 // Define the state structure including the AI provider selection and current step
-interface CAPSState extends Omit<ProjectInputState, 'apiKey'> { // Reuse existing type excluding apiKey
+interface CAPSState extends Omit<ProjectInputState, 'apiKey' | 'techStack'> { // Omit original techStack
   selectedAIProvider: AIProvider;
   currentStep: number; // Add current step state
+  techStack: {
+    frontend: string[];
+    backend: string[];
+    database: string[];
+    infrastructure: string[];
+    other: string[];
+  }; // Use string arrays for tech stack
 }
 
 // Define actions including step navigation
 interface CAPSActions {
   updateField: (field: keyof Omit<CAPSState, 'techStack' | 'generationOptions' | 'isLoading' | 'error' | 'selectedAIProvider' | 'currentStep'>, value: string) => void;
-  updateTechStackField: (field: keyof TechStack, value: string) => void;
+  addTechStackItem: (field: keyof CAPSState['techStack'], item: string) => void;
+  removeTechStackItem: (field: keyof CAPSState['techStack'], item: string) => void;
   updateGenerationOption: (type: 'rules' | 'specs' | 'checklist', key: keyof GenerationOptions['specs'] | 'rules' | 'checklist', value: boolean) => void;
   setSelectedAIProvider: (provider: AIProvider) => void;
   setLoading: (isLoading: boolean) => void;
@@ -27,12 +35,12 @@ interface CAPSActions {
 }
 
 // Define the initial state structure more explicitly
-const initialTechStack: TechStack = {
-  frontend: '',
-  backend: '',
-  database: '',
-  infrastructure: '',
-  other: '',
+const initialTechStack: CAPSState['techStack'] = {
+  frontend: [],
+  backend: [],
+  database: [],
+  infrastructure: [],
+  other: [],
 };
 
 const initialGenerationOptions: GenerationOptions = {
@@ -68,9 +76,17 @@ export const useProjectInputStore = create<CAPSState & CAPSActions>((set, get) =
 
   updateField: (field, value) => set((state) => ({ ...state, [field]: value })),
 
-  updateTechStackField: (field, value) => set((state) => ({
-    ...state,
-    techStack: { ...state.techStack, [field]: value },
+  addTechStackItem: (field, item) => set((state) => {
+    if (!item || state.techStack[field].includes(item)) return state; // Prevent empty/duplicate adds
+    return {
+        ...state,
+        techStack: { ...state.techStack, [field]: [...state.techStack[field], item] }
+    };
+  }),
+
+  removeTechStackItem: (field, item) => set((state) => ({
+      ...state,
+      techStack: { ...state.techStack, [field]: state.techStack[field].filter(i => i !== item) }
   })),
 
   updateGenerationOption: (type, key, value) => set((state) => {
