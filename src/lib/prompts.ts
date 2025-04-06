@@ -284,6 +284,72 @@ Structure the Technical Specification with the following sections using Markdown
    - [If none apparent, state "None identified at this stage."]
 `;
 
+// --- NEW: Specific prompt details for UI/UX Specification ---
+const uiUxSpecStructure = `
+Structure the UI/UX Specification with the following sections using Markdown headings:
+
+## 1. Screens / Pages List
+   - [List the primary screens or pages involved in the described features.]
+   - **Example Table Format:**
+     | Page Name        | Path/Route         | Description                                   |
+     |------------------|--------------------|-----------------------------------------------|
+     | {Feature} Page   | /{feature-route}   | Main view for {interacting with feature}      |
+     | {Related} Page   | /{related-route}   | Page showing {related information/results}  |
+     | Login Page       | /login             | (If features require authentication)          |
+
+## 2. Wireframes or High-Fidelity Mockups (Conceptual)
+   - *(Note: AI cannot generate actual images. Describe the key elements and states conceptually for each main screen listed above.)*
+   - **Screen: {Feature} Page**
+     - **Key Elements:** [List main UI elements, e.g., Title, Input Form, Submit Button, Data Display Area]
+     - **States:**
+       - *Loading:* [Describe loading indicator, e.g., "Spinner shown over data area"]
+       - *Error:* [Describe error message display, e.g., "Error toast shown: 'Failed to load data.'"]
+       - *Empty:* [Describe state when no data exists, e.g., "Message shown: 'No items found.'"]
+       - *Success/Default:* [Describe the normal state]
+   - **Screen: {Related} Page**
+     - [Repeat Key Elements & States description]
+
+## 3. Component Breakdown (Conceptual)
+   - [Describe key reusable UI components conceptually. Focus on behavior and data needed.]
+   - **Component: {ExampleButton}**
+     - **Purpose:** [e.g., To trigger the primary action for the feature]
+     - **Key Props (Conceptual):** [e.g., \`isDisabled\`, \`onClickHandler\`, \`label\`]
+     - **Behavior:** [e.g., "Calls onClickHandler when clicked. Visual style changes when disabled."]
+   - **Component: {ExampleDataDisplay}**
+     - **Purpose:** [e.g., To show the list of items related to the feature]
+     - **Key Props (Conceptual):** [e.g., \`itemsList\`, \`isLoading\`]
+     - **Behavior:** [e.g., "Renders a list item for each entry in \`itemsList\`. Shows a loading state based on \`isLoading\` prop."]
+
+## 4. State Management (Conceptual)
+   - [Describe how key frontend state might be handled based on the features.]
+   - **Global State:** [Identify data likely needed across multiple components, suggest storing in global state (e.g., Zustand/Redux/Context). Example: "User authentication status", "List of saved items".]
+   - **Local State:** [Identify state specific to individual components. Example: "Form input values before submission", "Loading state of a specific button".]
+   - **Data Fetching/Caching:** [Mention how data might be fetched and potentially cached. Example: "Data for {feature} list fetched on page load. Consider using a library like SWR or React Query for caching and revalidation."]
+
+## 5. User Interactions & Transitions
+   - [Describe the flow for key user interactions.]
+   - **Interaction: {Performing Primary Action}**
+     - 1. User enters data into {Input Form}.
+     - 2. User clicks {Submit Button}.
+     - 3. Frontend validates input.
+     - 4. IF valid, {Submit Button} disables, shows loading state.
+     - 5. Frontend calls API endpoint \`/api/{resource}\`.
+     - 6. IF API call successful, show success message/toast, update relevant UI area (e.g., data list), re-enable button.
+     - 7. IF API call fails, show error message/toast, re-enable button.
+
+## 6. Accessibility & Responsiveness
+   - [Outline general accessibility and responsiveness goals.]
+   - **Accessibility (A11y):** Adhere to WCAG 2.1 AA guidelines. Ensure semantic HTML, keyboard navigability for all interactive elements, sufficient color contrast, and ARIA attributes where necessary.
+   - **Responsiveness:** Ensure layout adapts cleanly to common screen sizes (Mobile, Tablet, Desktop). Test using browser developer tools.
+
+## 7. Frontend Test Cases (Conceptual)
+   - [List types of UI tests that should be considered.]
+   - **Component Tests:** Verify individual components render correctly with different props and states (loading, error, empty).
+   - **Interaction Tests:** Simulate user actions (button clicks, form input) and verify expected outcomes (state changes, API calls mocked).
+   - **End-to-End Tests (Optional):** Cover critical user flows across multiple pages/components.
+   - **Example Test Case:** "Verify that clicking the {Submit Button} when the form is valid triggers the correct API call and displays a success message upon mocked successful response."
+`;
+
 // Define example structures for other specs to avoid complex inline strings
 const tpsExampleStructure = `
 Examples sections for TPS:
@@ -294,16 +360,6 @@ Examples sections for TPS:
 - Test Data Requirements
 - Environment Requirements
 - Success/Exit Criteria
-`;
-
-const uiUxExampleStructure = `
-Example sections for UI/UX Spec:
-- Design Goals & Principles
-- Key User Flows (Visual - Placeholder)
-- Wireframes/Mockups (Links or Descriptions)
-- Component Library Usage (e.g., Material UI, Shadcn/ui)
-- Accessibility Notes (e.g., WCAG Compliance Level)
-- Interaction Details (e.g., Animations, Loading States)
 `;
 
 const dataExampleStructure = `
@@ -339,7 +395,7 @@ Structure the {specFocus} with logical sections relevant to its type. Use clear 
 ${tpsExampleStructure}
 
 *If {specFocus} is UI/UX Specification:*
-${uiUxExampleStructure}
+${uiUxSpecStructure}
 
 *If {specFocus} is Data Specification:*
 ${dataExampleStructure}
@@ -362,37 +418,36 @@ interface SpecInput extends ProjectBaseInput {
 // Function to get the input object for spec generation
 export function getSpecInput(specType: keyof ProjectInputData['generationOptions']['specs'], inputs: ProjectInputData): SpecInput {
     let specFocus = "";
-    let specStructure = defaultSpecStructure; // Start with default including examples
+    let specStructure = defaultSpecStructure; // Start with default
 
     switch (specType) {
-        case 'prd': 
-            specFocus = "Product Requirements Document (PRD)"; 
-            specStructure = prdStructure; 
+        case 'prd':
+            specFocus = "Product Requirements Document (PRD)";
+            specStructure = prdStructure;
             break;
-        case 'tps': 
-            specFocus = "Test Plan Specification (TPS)"; 
-            // Default structure already includes TPS examples
+        case 'tps':
+            specFocus = "Test Plan Specification (TPS)";
+            // Default structure used
             break;
-        case 'uiUx': 
-            specFocus = "UI/UX Specification"; 
-            // Default structure already includes UI/UX examples
+        case 'uiUx':
+            specFocus = "UI/UX Specification";
+            specStructure = uiUxSpecStructure;
             break;
-        case 'technical': 
-            specFocus = "Technical Specification"; 
-            specStructure = technicalSpecStructure; 
+        case 'technical':
+            specFocus = "Technical Specification";
+            specStructure = technicalSpecStructure;
             break;
-        case 'data': 
-            specFocus = "Data Specification"; 
-            // Default structure already includes Data examples
+        case 'data':
+            specFocus = "Data Specification";
+            // Default structure used
             break;
-        case 'integration': 
-            specFocus = "Integration Specification"; 
-            // Default structure already includes Integration examples
+        case 'integration':
+            specFocus = "Integration Specification";
+            // Default structure used
             break;
     }
 
     // Replace placeholder in the chosen structure template
-    // This needs to happen *after* selecting PRD/Technical or keeping default
     specStructure = specStructure.replace(/{specFocus}/g, specFocus);
 
     return {
