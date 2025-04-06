@@ -397,7 +397,7 @@ export default function HomePage() {
               </div>
             )}
 
-            <div className={`relative ${store.error ? 'pt-6' : ''}">
+            <div className={`relative ${store.error ? 'pt-6' : ''}`}>
               <AnimatePresence initial={false} custom={direction}>
                 <motion.div
                   key={store.currentStep}
@@ -414,6 +414,7 @@ export default function HomePage() {
               </AnimatePresence>
             </div>
 
+            {/* Navigation Buttons */}
             <div className="mt-8 pt-6 border-t border-slate-700/50 flex justify-between items-center z-10">
               {store.currentStep > 0 ? (
                 <button
@@ -423,10 +424,10 @@ export default function HomePage() {
                 >
                   Previous
                 </button>
-              ) : <div />}
+              ) : <div /> /* Placeholder */}
 
               <button
-                onClick={() => store.currentStep === TOTAL_STEPS - 1 ? handleSubmit(new Event('submit') as any) : paginate(1)}
+                onClick={(e) => store.currentStep === TOTAL_STEPS - 1 ? handleSubmit(e as any) : paginate(1)}
                 className={`bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-60 disabled:bg-indigo-800/50 disabled:cursor-not-allowed transition duration-150 ease-in-out shadow-md ${store.isLoading ? 'animate-pulse' : ''}`}
                 disabled={store.isLoading}
               >
@@ -434,11 +435,12 @@ export default function HomePage() {
                     ? (store.currentStep === TOTAL_STEPS - 1 ? 'Generating...' : 'Loading...')
                     : (store.currentStep === TOTAL_STEPS - 1 ? 'Create Project Setup' : 'Next')}
               </button>
-            </div>
+            </div> {/* End Navigation Buttons Div */}
 
-          </main>
+          </main> {/* Correctly close main */}
 
-          <div className="flex flex-col justify-center space-y-4 ml-8 pt-12">
+          {/* Progress Indicator Column */}
+          <div className="flex-shrink-0 flex flex-col justify-start space-y-4 ml-8 pt-12">
             {[...Array(TOTAL_STEPS)].map((_, i) => (
               <div
                 key={i}
@@ -446,10 +448,10 @@ export default function HomePage() {
                 title={`Step ${i + 1}`}
               />
             ))}
-          </div>
+          </div> {/* End Indicator Div */}
 
-        </div>
-      </div>
-    </div>
-  );
+        </div> {/* End Flex Row Div */}
+      </div> {/* End Centering Div */}
+    </div> // End Root Div
+  ); // End Return
 }
