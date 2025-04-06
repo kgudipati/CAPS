@@ -155,27 +155,23 @@ export default function HomePage() {
     }
   };
 
-  // --- Animation Variants (Vertical) ---
+  // --- Animation Variants (Fade Only) ---
   const variants = {
-    enter: (direction: number) => ({
-      y: direction > 0 ? 300 : -300, // Use Y-axis
-      opacity: 0
-    }),
+    enter: {
+      opacity: 0 // Start invisible
+    },
     center: {
       zIndex: 1,
-      y: 0, // Use Y-axis
-      opacity: 1
+      opacity: 1 // Fade in
     },
-    exit: (direction: number) => ({
+    exit: {
       zIndex: 0,
-      y: direction < 0 ? 300 : -300, // Use Y-axis
-      opacity: 0
-    })
+      opacity: 0 // Fade out
+    }
   };
 
   const transitionConfig = {
-    y: { type: "spring", stiffness: 150, damping: 25 }, // Animate Y
-    opacity: { duration: 0.4 }
+    opacity: { duration: 0.4 } // Control fade speed
   };
 
   const [direction, setDirection] = React.useState(0);
@@ -386,67 +382,73 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-slate-200 p-6 sm:p-8 font-sans">
-      <header className="w-full mb-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-slate-200 p-6 sm:p-8 font-sans flex flex-col">
+      <header className="w-full mb-8 flex-shrink-0">
         <h1 className="text-3xl font-bold text-slate-100">CAPS</h1>
       </header>
 
-      <main className="w-full max-w-4xl mx-auto p-12 bg-slate-800/60 backdrop-blur-sm rounded-xl shadow-2xl relative ring-1 ring-white/10 mb-6">
+      <div className="flex-grow flex items-center justify-center w-full">
+        <div className="flex items-start justify-center w-full max-w-5xl">
+          <main className="flex-1 max-w-4xl p-12 bg-slate-800/60 backdrop-blur-sm rounded-xl shadow-2xl relative ring-1 ring-white/10">
 
-        {store.error && (
-          <div className="absolute top-0 left-0 right-0 bg-red-500/30 border-b border-red-500/50 text-red-100 px-4 py-2 text-sm z-20 flex items-center justify-center" role="alert">
-            <span className="font-semibold mr-2">Error:</span> {store.error}
-          </div>
-        )}
+            {store.error && (
+              <div className="absolute top-0 left-0 right-0 bg-red-500/30 border-b border-red-500/50 text-red-100 px-4 py-2 text-sm z-20 flex items-center justify-center" role="alert">
+                <span className="font-semibold mr-2">Error:</span> {store.error}
+              </div>
+            )}
 
-        <div className={`relative ${store.error ? 'pt-6' : ''}`}>
-            <AnimatePresence initial={false} custom={direction}>
-              <motion.div
-                key={store.currentStep}
-                custom={direction}
-                variants={variants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={transitionConfig}
-                className="min-h-[350px]"
+            <div className={`relative ${store.error ? 'pt-6' : ''}">
+              <AnimatePresence initial={false} custom={direction}>
+                <motion.div
+                  key={store.currentStep}
+                  custom={direction}
+                  variants={variants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={transitionConfig}
+                  className="min-h-[350px]"
+                >
+                  {renderStepContent()}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-slate-700/50 flex justify-between items-center z-10">
+              {store.currentStep > 0 ? (
+                <button
+                  onClick={() => paginate(-1)}
+                  className="text-indigo-400 hover:text-indigo-300 font-medium transition duration-150 ease-in-out disabled:opacity-50"
+                  disabled={store.isLoading}
+                >
+                  Previous
+                </button>
+              ) : <div />}
+
+              <button
+                onClick={() => store.currentStep === TOTAL_STEPS - 1 ? handleSubmit(new Event('submit') as any) : paginate(1)}
+                className={`bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-60 disabled:bg-indigo-800/50 disabled:cursor-not-allowed transition duration-150 ease-in-out shadow-md ${store.isLoading ? 'animate-pulse' : ''}`}
+                disabled={store.isLoading}
               >
-                {renderStepContent()}
-              </motion.div>
-            </AnimatePresence>
+                {store.isLoading
+                    ? (store.currentStep === TOTAL_STEPS - 1 ? 'Generating...' : 'Loading...')
+                    : (store.currentStep === TOTAL_STEPS - 1 ? 'Create Project Setup' : 'Next')}
+              </button>
+            </div>
+
+          </main>
+
+          <div className="flex flex-col justify-center space-y-4 ml-8 pt-12">
+            {[...Array(TOTAL_STEPS)].map((_, i) => (
+              <div
+                key={i}
+                className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${store.currentStep === i ? 'bg-indigo-400' : 'bg-slate-600 hover:bg-slate-500'}`}
+                title={`Step ${i + 1}`}
+              />
+            ))}
+          </div>
+
         </div>
-
-        <div className="mt-8 pt-6 border-t border-slate-700/50 flex justify-between items-center z-10">
-          {store.currentStep > 0 ? (
-            <button
-              onClick={() => paginate(-1)}
-              className="text-indigo-400 hover:text-indigo-300 font-medium transition duration-150 ease-in-out disabled:opacity-50"
-              disabled={store.isLoading}
-            >
-              Previous
-            </button>
-          ) : <div />}
-
-          <button
-            onClick={() => store.currentStep === TOTAL_STEPS - 1 ? handleSubmit(new Event('submit') as any) : paginate(1)}
-            className={`bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-60 disabled:bg-indigo-800/50 disabled:cursor-not-allowed transition duration-150 ease-in-out shadow-md ${store.isLoading ? 'animate-pulse' : ''}`}
-            disabled={store.isLoading}
-          >
-            {store.isLoading
-                ? (store.currentStep === TOTAL_STEPS - 1 ? 'Generating...' : 'Loading...')
-                : (store.currentStep === TOTAL_STEPS - 1 ? 'Create Project Setup' : 'Next')}
-          </button>
-        </div>
-
-      </main>
-
-      <div className="w-full max-w-4xl mx-auto flex justify-center space-x-3 mt-6">
-        {[...Array(TOTAL_STEPS)].map((_, i) => (
-          <div
-            key={i}
-            className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${store.currentStep === i ? 'bg-indigo-400' : 'bg-slate-600 hover:bg-slate-500'}`}
-          />
-        ))}
       </div>
     </div>
   );
