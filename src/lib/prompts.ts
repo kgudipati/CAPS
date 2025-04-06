@@ -570,10 +570,31 @@ export function getSpecInput(specType: keyof ProjectInputData['generationOptions
 // --- Checklist Prompt --- 
 
 export const checklistTemplate = `
-Generate a detailed task checklist (in Markdown format with checkboxes) for implementing the software project described below.
-The checklist should break down the project into concrete, actionable steps suitable for an AI assistant (like Cursor) or a developer to follow.
-Cover setup, feature implementation, testing, and potentially deployment steps.
+Generate a detailed **Test-Driven Development (TDD)** implementation checklist (in Markdown format with check
+boxes) for the software project described below.
+The checklist must guide an AI assistant or developer through coding and implementation tasks ONLY.
+Exclude documentation, user studies, CI/CD setup, deployment, or other non-coding activities.
 
+**Instructions for Checklist Generation:**
+1.  **Categorize:** Group tasks into logical categories (e.g., Backend Setup, API Development, Frontend Comp
+onents, Feature Implementation - [Feature Name]).
+2.  **TDD Focus:** For each functional piece of code (e.g., API endpoint logic, utility function, complex UI 
+component logic):
+    - First, add a task to write a failing test(s) (Unit or Integration as appropriate). Example: \`- [ ] TES
+T: Write failing unit test for user creation validation logic.\`
+    - Second, add a task to write the minimum code required to make the test(s) pass. Example: \`- [ ] IMPL:
+ Implement user creation validation logic to pass the test.\`
+    - Third, optionally add a task for refactoring if needed. Example: \`- [ ] REFACTOR: Refactor user creat
+ion logic for clarity and efficiency.\`
+3.  **Logical Order:** Ensure tasks within and between categories follow a logical implementation sequence (e.
+g., set up backend models before creating API endpoints that use them).
+4.  **Descriptive Tasks:** Clearly describe each task, specifying the component, feature, or logic involved.
+ Avoid vague tasks.
+5.  **Implementation Only:** Focus solely on tasks directly related to writing code (setup, tests, implement
+ation, refactoring). Do NOT include tasks like \"Write documentation\", \"Conduct user research\", \"Set up G
+itHub Actions\", \"Deploy to Vercel\".
+
+**Project Details:**
 Project Description:
 {projectDescription}
 
@@ -589,15 +610,22 @@ Key Features:
 Tech Stack:
 {techStackInfo}
 
-Generate the checklist. Ensure tasks are logical, sequential where necessary, and cover the key aspects of the project based on the description and features.
-Example task format:
-- [ ] Set up Next.js project with TypeScript and Tailwind CSS.
-- [ ] Implement user authentication using NextAuth.js.
-- [ ] Create database schema for user profiles and posts.
-- [ ] Build API endpoint for creating new posts.
-- [ ] Develop frontend component for displaying posts.
+Generate the TDD checklist based on the above instructions and project details.
+Example Task Structure:
 
-Output only the Markdown checklist, starting immediately with the first task.
+### Category: Backend Setup
+- [ ] SETUP: Initialize Prisma schema with initial User model.
+- [ ] SETUP: Configure testing environment and database fixtures.
+
+### Category: API Development - User Authentication
+- [ ] TEST: Write failing integration test for POST /api/auth/register endpoint (invalid input case).
+- [ ] IMPL: Implement basic POST /api/auth/register endpoint structure and input validation to pass test.
+- [ ] TEST: Write failing integration test for POST /api/auth/register endpoint (successful registration).
+- [ ] IMPL: Implement user creation logic (hashing password, saving to DB) to pass test.
+- [ ] REFACTOR: Refactor registration logic if necessary.
+
+Output ONLY the Markdown checklist, starting immediately with the first category heading (e.g., ### Category
+: ...).
 `;
 
 // Function to get input for checklist (same as project rules)
