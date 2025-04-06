@@ -23,6 +23,16 @@ const generationOptions = {
   checklist: [{ id: 'gen-checklist', label: 'Task Checklist' }],
 };
 
+// Mapping from store keys to option IDs (inverse of the one in handleGenerationOptionChange)
+const specKeyToOptionIdMap: { [key in keyof GenerationOptions['specs']]: string } = {
+    prd: 'spec-prd',
+    tps: 'spec-tps',
+    uiUx: 'spec-uiux',
+    technical: 'spec-tech',
+    data: 'spec-data',
+    integration: 'spec-integ',
+};
+
 export default function HomePage() {
   const store = useProjectInputStore();
 
@@ -263,16 +273,17 @@ export default function HomePage() {
               selectedValues={store.generationOptions.rules ? [generationOptions.rules[0].id] : []}
               onChange={(id, checked) => handleGenerationOptionChange('rules', id, checked)}
             />
-             <CheckboxGroup
+            <CheckboxGroup
               legend="Generate Specs? (Select all that apply)"
               options={generationOptions.specs}
               selectedValues={Object.entries(store.generationOptions.specs)
-                .filter(([, value]) => value)
-                .map(([key]) => generationOptions.specs.find(opt => opt.id.includes(key as keyof GenerationOptions['specs']))?.id ?? '') // Ensure key is typed here
-                .filter(id => !!id)}
+                .filter(([, value]) => value) // Filter for true values
+                .map(([key]) => specKeyToOptionIdMap[key as keyof GenerationOptions['specs']]) // Map key to option ID using the map
+                .filter(id => !!id) // Filter out any potential undefined/null if map fails (shouldn't happen now)
+              }
               onChange={(id, checked) => handleGenerationOptionChange('specs', id, checked)}
             />
-             <CheckboxGroup
+            <CheckboxGroup
               legend="Generate Checklist?"
               options={generationOptions.checklist}
               selectedValues={store.generationOptions.checklist ? [generationOptions.checklist[0].id] : []}
