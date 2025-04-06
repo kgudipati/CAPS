@@ -1,4 +1,4 @@
-import { ProjectInputData, TechStack } from "@/types"; // Import shared ProjectInputData type
+import { ProjectInputData, TechStack } from "@/types"; // Use correct ProjectInputData type
 
 // Helper function to format tech stack details
 function formatTechStack(techStack: Partial<TechStack>): string {

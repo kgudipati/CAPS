@@ -4,8 +4,8 @@ import React from 'react';
 import TextAreaInput from '@/components/TextAreaInput';
 import CheckboxGroup from '@/components/CheckboxGroup';
 import TextInput from '@/components/TextInput'; // Import TextInput
-import { useProjectInputStore } from '@/lib/store';
-import { ProjectInputState, TechStack, GenerationOptions } from '@/types'; // Add GenerationOptions
+import { useProjectInputStore, AIProvider } from '@/lib/store';
+import { ProjectInputState, TechStack, GenerationOptions, ProjectInputData } from '@/types'; // Add GenerationOptions and ProjectInputData
 
 // Define generation options (tech stack options removed)
 // const techStackOptions = [ ... ]; // Removed
@@ -26,7 +26,7 @@ const generationOptions = {
 export default function HomePage() {
   const store = useProjectInputStore();
 
-  const handleTextChange = (field: keyof Pick<ProjectInputState, 'projectDescription' | 'problemStatement' | 'features' | 'targetUsers'>) => (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleTextChange = (field: keyof Pick<ProjectInputData, 'projectDescription' | 'problemStatement' | 'features' | 'targetUsers'>) => (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     store.updateField(field, e.target.value);
   };
 
@@ -69,6 +69,11 @@ export default function HomePage() {
      store.updateGenerationOption(type, key, isChecked);
   };
 
+  // Handler for AI Provider selection
+  const handleProviderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    store.setSelectedAIProvider(event.target.value as AIProvider);
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     store.setLoading(true);
@@ -82,6 +87,7 @@ export default function HomePage() {
         targetUsers: currentState.targetUsers,
         techStack: currentState.techStack,
         generationOptions: currentState.generationOptions,
+        selectedAIProvider: currentState.selectedAIProvider,
     };
     console.log('Submitting form data:', formData);
 
@@ -144,6 +150,32 @@ export default function HomePage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-10">
+        <section>
+          <h2 className="text-xl font-semibold mb-4 border-b pb-2">AI Provider</h2>
+          <p className="text-sm text-gray-600 mb-3">Select the AI provider you have configured in your <code>.env.local</code> file.</p>
+          <fieldset className="mt-4">
+            <legend className="sr-only">AI Provider Selection</legend>
+            <div className="space-y-4 sm:flex sm:items-center sm:space-y-0 sm:space-x-10">
+              {(['openai', 'google', 'anthropic'] as AIProvider[]).map((provider) => (
+                <div key={provider} className="flex items-center">
+                  <input
+                    id={provider}
+                    name="ai-provider"
+                    type="radio"
+                    value={provider}
+                    checked={store.selectedAIProvider === provider}
+                    onChange={handleProviderChange}
+                    className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
+                  />
+                  <label htmlFor={provider} className="ml-3 block text-sm font-medium text-gray-700 capitalize">
+                    {provider}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </fieldset>
+        </section>
+
         <section>
           <h2 className="text-xl font-semibold mb-4 border-b pb-2">Project Details</h2>
           <TextAreaInput
