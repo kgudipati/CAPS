@@ -284,70 +284,111 @@ Structure the Technical Specification with the following sections using Markdown
    - [If none apparent, state "None identified at this stage."]
 `;
 
-// --- NEW: Specific prompt details for UI/UX Specification ---
+// --- Updated: Specific prompt details for UI/UX Specification ---
 const uiUxSpecStructure = `
 Structure the UI/UX Specification with the following sections using Markdown headings:
 
 ## 1. Screens / Pages List
-   - [List the primary screens or pages involved in the described features.]
-   - **Example Table Format:**
-     | Page Name        | Path/Route         | Description                                   |
+   - [List all primary screens/pages involved in the features described.]
+   - **Table Format:**
+     | Screen/Page Name | Path/Route         | Brief Description                             |
      |------------------|--------------------|-----------------------------------------------|
-     | {Feature} Page   | /{feature-route}   | Main view for {interacting with feature}      |
-     | {Related} Page   | /{related-route}   | Page showing {related information/results}  |
-     | Login Page       | /login             | (If features require authentication)          |
+     | {Example Home}   | /                  | Main landing page                             |
+     | {Example Feature}| /{feature-route}   | Page for {primary feature interaction}      |
+     | {Example List}   | /{list-route}      | Page displaying {list of items}           |
+     | Login            | /login             | User authentication page (if required)        |
 
-## 2. Wireframes or High-Fidelity Mockups (Conceptual)
-   - *(Note: AI cannot generate actual images. Describe the key elements and states conceptually for each main screen listed above.)*
-   - **Screen: {Feature} Page**
-     - **Key Elements:** [List main UI elements, e.g., Title, Input Form, Submit Button, Data Display Area]
+## 2. Wireframes or High-Fidelity Designs (Conceptual)
+   - *(Note: AI cannot generate actual images. Describe the key visual elements, layout, and states conceptually for each main screen listed above.)*
+   - **Screen: {Screen Name from Section 1}**
+     - **Key Elements:** [List main UI elements and their rough placement, e.g., Header (Logo, Nav), Main Content Area (Form, Data Table), Footer.]
      - **States:**
-       - *Loading:* [Describe loading indicator, e.g., "Spinner shown over data area"]
-       - *Error:* [Describe error message display, e.g., "Error toast shown: 'Failed to load data.'"]
-       - *Empty:* [Describe state when no data exists, e.g., "Message shown: 'No items found.'"]
-       - *Success/Default:* [Describe the normal state]
-   - **Screen: {Related} Page**
-     - [Repeat Key Elements & States description]
+       - *Loading:* [Describe indicator, e.g., "Skeleton loaders for table rows", "Spinner overlay on form area".]
+       - *Error:* [Describe error display, e.g., "Inline error messages below form fields", "Global error banner at top: 'Failed to {action}'."]
+       - *Empty:* [Describe state when no data exists, e.g., "Message in table area: 'No {items} found. Get started by {action}'."]
+       - *Success/Default:* [Describe the normal, populated state.]
+   - [Repeat for other key screens.]
 
 ## 3. Component Breakdown (Conceptual)
-   - [Describe key reusable UI components conceptually. Focus on behavior and data needed.]
-   - **Component: {ExampleButton}**
-     - **Purpose:** [e.g., To trigger the primary action for the feature]
-     - **Key Props (Conceptual):** [e.g., \`isDisabled\`, \`onClickHandler\`, \`label\`]
-     - **Behavior:** [e.g., "Calls onClickHandler when clicked. Visual style changes when disabled."]
-   - **Component: {ExampleDataDisplay}**
-     - **Purpose:** [e.g., To show the list of items related to the feature]
-     - **Key Props (Conceptual):** [e.g., \`itemsList\`, \`isLoading\`]
-     - **Behavior:** [e.g., "Renders a list item for each entry in \`itemsList\`. Shows a loading state based on \`isLoading\` prop."]
+   - [Describe key reusable UI components conceptually. Focus on purpose, data needs (props), and core behavior.]
+   - **Component: {ExampleButton} (e.g., Primary Action Button)**
+     - **Purpose:** [e.g., To submit the main form, to save an item.]
+     - **Key Props (Conceptual):** [e.g., \`isDisabled: boolean\`, \`isLoading: boolean\`, \`onClick: function\`, \`text: string\`]
+     - **Behavior:** [e.g., "Displays \`text\`. Visual style changes based on \`isDisabled\` and \`isLoading\`. Triggers \`onClick\` when pressed."]
+   - **Component: {ExampleInput} (e.g., Text Input with Label)**
+     - **Purpose:** [e.g., Capture user text input for {field}.]
+     - **Key Props (Conceptual):** [e.g., \`label: string\`, \`value: string\`, \`onChange: function\`, \`errorText: string | null\`]
+     - **Behavior:** [e.g., "Displays \`label\`. Updates \`value\` via \`onChange\`. Shows \`errorText\` if present."]
+   - [Describe other key components like Modals, Tables, Cards, etc.]
 
-## 4. State Management (Conceptual)
-   - [Describe how key frontend state might be handled based on the features.]
-   - **Global State:** [Identify data likely needed across multiple components, suggest storing in global state (e.g., Zustand/Redux/Context). Example: "User authentication status", "List of saved items".]
-   - **Local State:** [Identify state specific to individual components. Example: "Form input values before submission", "Loading state of a specific button".]
-   - **Data Fetching/Caching:** [Mention how data might be fetched and potentially cached. Example: "Data for {feature} list fetched on page load. Consider using a library like SWR or React Query for caching and revalidation."]
+## 4. State Handling (Conceptual Frontend State)
+   - [Describe how key frontend state is likely managed.]
+   - **Global State:** [Identify data/state needed across multiple components (e.g., User Info, Auth Status, App Settings). Suggest storing in global state (Zustand recommended based on project stack).]
+   - **Local Component State:** [Identify state confined to single components (e.g., Form input values, Dropdown open/close status, Modal visibility).]
+   - **Server Cache/Data Fetching State:** [Mention approach (e.g., React Query, SWR, or basic fetch) for managing API data, loading, and error states related to data fetching.]
 
 ## 5. User Interactions & Transitions
-   - [Describe the flow for key user interactions.]
-   - **Interaction: {Performing Primary Action}**
-     - 1. User enters data into {Input Form}.
-     - 2. User clicks {Submit Button}.
-     - 3. Frontend validates input.
-     - 4. IF valid, {Submit Button} disables, shows loading state.
-     - 5. Frontend calls API endpoint \`/api/{resource}\`.
-     - 6. IF API call successful, show success message/toast, update relevant UI area (e.g., data list), re-enable button.
-     - 7. IF API call fails, show error message/toast, re-enable button.
+   - [Describe the expected behavior for key interactions.]
+   - **Interaction:** [Example: Clicking Save Button]
+     - *Trigger:* User clicks 'Save'.
+     - *Action:* Button enters loading state. API call initiated.
+     - *Feedback (Success):* Show success toast ("Item Saved!"). Button state resets, potentially shows 'Saved' state briefly.
+     - *Feedback (Error):* Show error toast ("Failed to save"). Button state resets.
+   - **Transition:** [Example: Navigating to Detail Page]
+     - *Trigger:* User clicks item in list.
+     - *Action:* Navigate to /{item-route}/{item-id}.
+     - *Feedback:* Show page transition (if any). Display loading state on detail page while data fetches.
 
-## 6. Accessibility & Responsiveness
-   - [Outline general accessibility and responsiveness goals.]
-   - **Accessibility (A11y):** Adhere to WCAG 2.1 AA guidelines. Ensure semantic HTML, keyboard navigability for all interactive elements, sufficient color contrast, and ARIA attributes where necessary.
-   - **Responsiveness:** Ensure layout adapts cleanly to common screen sizes (Mobile, Tablet, Desktop). Test using browser developer tools.
+## 6. Navigation Flows
+   - [Describe how users move between the key screens listed in Section 1 to accomplish primary tasks.]
+   - **Flow Example (Achieving {Primary Goal}):**
+     - 1. User starts at {Start Screen}.
+     - 2. User clicks {Link/Button} to navigate to {Screen A}.
+     - 3. User interacts with {Component} on Screen A.
+     - 4. User is redirected/navigates to {Screen B}.
+     - 5. User sees {Result} on Screen B.
 
-## 7. Frontend Test Cases (Conceptual)
-   - [List types of UI tests that should be considered.]
-   - **Component Tests:** Verify individual components render correctly with different props and states (loading, error, empty).
-   - **Interaction Tests:** Simulate user actions (button clicks, form input) and verify expected outcomes (state changes, API calls mocked).
-   - **End-to-End Tests (Optional):** Cover critical user flows across multiple pages/components.
-   - **Example Test Case:** "Verify that clicking the {Submit Button} when the form is valid triggers the correct API call and displays a success message upon mocked successful response."
+## 7. Responsive Design
+   - [Outline the approach to different screen sizes.]
+   - **Breakpoints:** [Specify standard breakpoints if known (e.g., sm, md, lg based on Tailwind defaults) or state "Standard mobile, tablet, desktop breakpoints apply."]
+   - **Behavior:** [Describe general adaptation strategy (e.g., "Stack elements vertically on mobile", "Use drawer navigation on smaller screens", "Ensure tables are scrollable horizontally on mobile").]
+
+## 8. Accessibility (a11y)
+   - [Outline accessibility commitments.]
+   - **Standard:** Target WCAG 2.1 Level AA compliance.
+   - **Keyboard Navigation:** All interactive elements (buttons, links, inputs, etc.) must be focusable and operable via keyboard.
+   - **Screen Reader Support:** Use semantic HTML. Provide meaningful alt text for images. Use ARIA attributes (e.g., \`aria-label\`, \`aria-required\`) where necessary to enhance screen reader experience.
+   - **Color Contrast:** Ensure text and UI elements meet minimum contrast ratios.
+
+## 9. Design Tokens & Theming (Conceptual)
+   - [Describe the visual design system foundation.]
+   - **Fonts:** [Specify primary font families if known, otherwise state "Standard sans-serif font (e.g., Inter)."]
+   - **Colors:** [Mention primary brand colors if known, otherwise state "Standard color palette with primary, secondary, success, error colors."]
+   - **Spacing:** [Mention if a spacing scale (e.g., 4px or 8px grid) is used.]
+   - **Theming:** [Mention if dark mode support is required/planned.]
+
+## 10. Frontend-Backend Contracts (Data Expectations)
+   - [Summarize the data the UI expects from the backend APIs defined in the Technical Spec.]
+   - **Data for {Feature} Page:** [Expected fields/structure, e.g., \`user: { id, name }\`, \`items: [ { id, title, status } ]\`]
+   - **Data for {List} Page:** [Expected fields/structure]
+
+## 11. UX Edge Cases
+   - [Identify potential edge cases and how the UI should handle them.]
+   - **Invalid Input:** [How are validation errors displayed (e.g., "Inline messages below fields upon losing focus or submission attempt").]
+   - **Network Errors:** [How are general API connection failures handled (e.g., "Global error message/toast").]
+   - **Rate Limiting:** [If applicable, how is user notified (e.g., "Toast message: 'Too many requests, please try again later'.").]
+
+## 12. Testing Plan (Frontend Focus)
+   - [Outline expected frontend testing.]
+   - **Component Tests:** [Test individual components in isolation using tools like Vitest/Jest and React Testing Library.]
+   - **Integration Tests:** [Test interaction between multiple components, context/store integration.]
+   - **E2E Tests:** [Optional: Use tools like Cypress or Playwright to test critical user flows in a browser.]
+   - **Visual Regression Tests:** [Optional: Mention if visual testing tools will be used.]
+
+## 13. Component Library Reference
+   - [Specify the UI component library being used, if decided.]
+   - **Library:** [e.g., Shadcn/ui, Material UI, Ant Design, Custom internal library.]
+   - **Storybook:** [Mention if Storybook will be used for component development and documentation.]
 `;
 
 // Define example structures for other specs to avoid complex inline strings
@@ -397,10 +438,10 @@ ${tpsExampleStructure}
 *If {specFocus} is UI/UX Specification:*
 ${uiUxSpecStructure}
 
-*If {specFocus} is Data Specification:*
+*If {specFocus} is Data Specification:**
 ${dataExampleStructure}
 
-*If {specFocus} is Integration Specification:*
+*If {specFocus} is Integration Specification:*\
 ${integrationExampleStructure}
 `;
 
@@ -418,7 +459,7 @@ interface SpecInput extends ProjectBaseInput {
 // Function to get the input object for spec generation
 export function getSpecInput(specType: keyof ProjectInputData['generationOptions']['specs'], inputs: ProjectInputData): SpecInput {
     let specFocus = "";
-    let specStructure = defaultSpecStructure; // Start with default
+    let specStructure = defaultSpecStructure;
 
     switch (specType) {
         case 'prd':
