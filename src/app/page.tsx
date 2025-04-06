@@ -151,10 +151,10 @@ export default function HomePage() {
     }
   };
 
-  // --- Animation Variants ---
+  // --- Animation Variants (Smoother) ---
   const variants = {
     enter: (direction: number) => ({
-      x: direction > 0 ? 1000 : -1000,
+      x: direction > 0 ? 500 : -500, // Reduced travel distance
       opacity: 0
     }),
     center: {
@@ -164,9 +164,14 @@ export default function HomePage() {
     },
     exit: (direction: number) => ({
       zIndex: 0,
-      x: direction < 0 ? 1000 : -1000,
+      x: direction < 0 ? 500 : -500, // Reduced travel distance
       opacity: 0
     })
+  };
+
+  const transitionConfig = {
+    x: { type: "spring", stiffness: 150, damping: 25 }, // Softer spring
+    opacity: { duration: 0.4 } // Longer fade
   };
 
   const [direction, setDirection] = React.useState(0);
@@ -185,20 +190,23 @@ export default function HomePage() {
       switch (store.currentStep) {
           case 0:
               return (
-                  <>
+                  <div className="space-y-6"> {/* Increased spacing */}
                       <TextAreaInput
                           label="Describe your project idea in a paragraph"
                           id="projectDescription"
                           value={store.projectDescription}
                           onChange={handleTextChange('projectDescription')}
                           required
-                          placeholder="E.g., A web application that allows users to track their daily water intake..."
+                          placeholder="E.g., A web application for tracking daily water intake..."
                           rows={5}
-                          className="bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500"
+                          // Updated styling for readability
+                          wrapperClassName="mb-0" // Remove default margin from wrapper
+                          labelClassName="text-slate-300"
+                          className="bg-slate-700 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 rounded-md"
                       />
-                      <fieldset className="mt-6">
-                          <legend className="block text-sm font-medium text-gray-300 mb-3">Select AI Provider (configured in .env.local)</legend>
-                          <div className="flex flex-wrap gap-x-6 gap-y-3">
+                      <fieldset>
+                          <legend className="block text-sm font-medium text-slate-300 mb-3">Select AI Provider</legend>
+                          <div className="flex flex-wrap gap-x-6 gap-y-4"> {/* Increased gap */}
                               {(['openai', 'google', 'anthropic'] as AIProvider[]).map((provider) => (
                                   <div key={provider} className="flex items-center">
                                       <input
@@ -208,29 +216,32 @@ export default function HomePage() {
                                           value={provider}
                                           checked={store.selectedAIProvider === provider}
                                           onChange={handleProviderChange}
-                                          className="focus:ring-indigo-500 h-4 w-4 text-indigo-400 bg-gray-600 border-gray-500"
+                                          // Updated styling
+                                          className="focus:ring-indigo-500 h-4 w-4 text-indigo-400 bg-slate-600 border-slate-500 rounded-full"
                                       />
-                                      <label htmlFor={provider} className="ml-2 block text-sm font-medium text-gray-300 capitalize">
+                                      <label htmlFor={provider} className="ml-2 block text-sm font-medium text-slate-200 capitalize">
                                           {provider}
                                       </label>
                                   </div>
                               ))}
                           </div>
                       </fieldset>
-                  </>
+                  </div>
               );
           case 1:
               return (
-                  <>
+                  <div className="space-y-6"> {/* Increased spacing */}
                       <TextAreaInput
                           label="What problem(s) does it solve for users?"
                           id="problemStatement"
                           value={store.problemStatement}
                           onChange={handleTextChange('problemStatement')}
                           required
-                          placeholder="E.g., Users often forget to drink enough water throughout the day..."
+                          placeholder="E.g., Users often forget to drink enough water..."
                           rows={4}
-                          className="bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500"
+                          wrapperClassName="mb-0"
+                          labelClassName="text-slate-300"
+                          className="bg-slate-700 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 rounded-md"
                        />
                       <TextAreaInput
                           label="Who are the target users?"
@@ -238,51 +249,60 @@ export default function HomePage() {
                           value={store.targetUsers}
                           onChange={handleTextChange('targetUsers')}
                           required
-                          placeholder="E.g., Health-conscious individuals, office workers, people tracking fitness goals..."
+                          placeholder="E.g., Health-conscious individuals..."
                           rows={4}
-                          className="bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500 mt-6"
+                          wrapperClassName="mb-0"
+                          labelClassName="text-slate-300"
+                          className="bg-slate-700 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 rounded-md"
                       />
-                  </>
+                  </div>
               );
            case 2:
               return (
-                  <TextAreaInput
-                      label="What features will users have access to?"
-                      id="features"
-                      value={store.features}
-                      onChange={handleTextChange('features')}
-                      required
-                      placeholder="E.g., Log water intake, set daily goals, view progress charts, receive reminders..."
-                      rows={6}
-                      className="bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500"
-                  />
+                  <div className="space-y-6"> {/* Increased spacing */}
+                      <TextAreaInput
+                          label="What features will users have access to?"
+                          id="features"
+                          value={store.features}
+                          onChange={handleTextChange('features')}
+                          required
+                          placeholder="E.g., Log intake, set goals, view charts..."
+                          rows={6}
+                          wrapperClassName="mb-0"
+                          labelClassName="text-slate-300"
+                          className="bg-slate-700 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 rounded-md"
+                      />
+                  </div>
               );
-           case 3:
+           case 3: // Tech Stack - Will be replaced later
               return (
-                  <>
-                    <h3 className="text-lg font-medium text-gray-300 mb-4">Technology Stack (Optional)</h3>
-                    <p className="text-sm text-gray-400 mb-5">Describe the technologies you plan to use, or leave blank to let the AI decide.</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-                       <TextInput label="Frontend" id="tech-frontend" value={store.techStack.frontend} onChange={handleTechStackTextChange('frontend')} placeholder="e.g., React, Next.js" inputClassName="bg-gray-700 border-gray-600 text-white" />
-                       <TextInput label="Backend" id="tech-backend" value={store.techStack.backend} onChange={handleTechStackTextChange('backend')} placeholder="e.g., Node.js, Python" inputClassName="bg-gray-700 border-gray-600 text-white"/>
-                       <TextInput label="Database" id="tech-database" value={store.techStack.database} onChange={handleTechStackTextChange('database')} placeholder="e.g., PostgreSQL, MongoDB" inputClassName="bg-gray-700 border-gray-600 text-white"/>
-                       <TextInput label="Infrastructure/Hosting" id="tech-infrastructure" value={store.techStack.infrastructure} onChange={handleTechStackTextChange('infrastructure')} placeholder="e.g., Vercel, AWS" inputClassName="bg-gray-700 border-gray-600 text-white"/>
-                       <TextInput label="Other Tools/Libraries" id="tech-other" value={store.techStack.other} onChange={handleTechStackTextChange('other')} placeholder="e.g., Zustand, Stripe" inputClassName="bg-gray-700 border-gray-600 text-white"/>
+                  <div className="space-y-6"> {/* Increased spacing */}
+                    <h3 className="text-lg font-medium text-slate-200 mb-1">Technology Stack (Optional)</h3>
+                    <p className="text-sm text-slate-400 mb-4">Describe the tech stack, or leave blank.</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5"> {/* Increased gap */}
+                       <TextInput label="Frontend" id="tech-frontend" value={store.techStack.frontend} onChange={handleTechStackTextChange('frontend')} placeholder="e.g., React, Next.js" labelClassName="text-slate-300" wrapperClassName="mb-0" inputClassName="bg-slate-700 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 rounded-md" />
+                       <TextInput label="Backend" id="tech-backend" value={store.techStack.backend} onChange={handleTechStackTextChange('backend')} placeholder="e.g., Node.js, Python" labelClassName="text-slate-300" wrapperClassName="mb-0" inputClassName="bg-slate-700 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 rounded-md"/>
+                       <TextInput label="Database" id="tech-database" value={store.techStack.database} onChange={handleTechStackTextChange('database')} placeholder="e.g., PostgreSQL" labelClassName="text-slate-300" wrapperClassName="mb-0" inputClassName="bg-slate-700 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 rounded-md"/>
+                       <TextInput label="Infrastructure/Hosting" id="tech-infrastructure" value={store.techStack.infrastructure} onChange={handleTechStackTextChange('infrastructure')} placeholder="e.g., Vercel, AWS" labelClassName="text-slate-300" wrapperClassName="mb-0" inputClassName="bg-slate-700 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 rounded-md"/>
+                       <TextInput label="Other Tools/Libraries" id="tech-other" value={store.techStack.other} onChange={handleTechStackTextChange('other')} placeholder="e.g., Zustand, Stripe" labelClassName="text-slate-300" wrapperClassName="mb-0" inputClassName="bg-slate-700 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 rounded-md"/>
                     </div>
-                  </>
+                  </div>
               );
            case 4:
               return (
-                  <>
-                    <h3 className="text-lg font-medium text-gray-300 mb-4">Generation Options</h3>
-                    <div className="space-y-5">
+                  <div className="space-y-6"> {/* Increased spacing */}
+                    <h3 className="text-lg font-medium text-slate-200 mb-2">Generation Options</h3>
+                    <div className="space-y-6"> {/* Increased spacing */}
                       <CheckboxGroup
                         legend="Generate Rules?"
                         options={generationOptions.rules}
                         selectedValues={store.generationOptions.rules ? [generationOptions.rules[0].id] : []}
                         onChange={(id, checked) => handleGenerationOptionChange('rules', id, checked)}
-                        labelClassName="text-gray-300"
-                        checkboxClassName="bg-gray-600 border-gray-500 text-indigo-400 focus:ring-indigo-500"
+                        // Updated styling
+                        fieldsetClassName="mb-0"
+                        legendClassName="text-slate-300 !mb-3" // override default mb
+                        labelClassName="text-slate-200"
+                        checkboxClassName="bg-slate-600 border-slate-500 text-indigo-400 focus:ring-indigo-500 rounded"
                       />
                        <CheckboxGroup
                         legend="Generate Specs? (Select all that apply)"
@@ -292,35 +312,44 @@ export default function HomePage() {
                           .map(([key]) => specKeyToOptionIdMap[key as keyof GenerationOptions['specs']])
                           .filter(id => !!id)}
                         onChange={(id, checked) => handleGenerationOptionChange('specs', id, checked)}
-                        labelClassName="text-gray-300"
-                        checkboxClassName="bg-gray-600 border-gray-500 text-indigo-400 focus:ring-indigo-500"
+                         // Updated styling
+                        fieldsetClassName="mb-0"
+                        legendClassName="text-slate-300 !mb-3"
+                        labelClassName="text-slate-200"
+                        checkboxClassName="bg-slate-600 border-slate-500 text-indigo-400 focus:ring-indigo-500 rounded"
                       />
                        <CheckboxGroup
                         legend="Generate Checklist?"
                         options={generationOptions.checklist}
                         selectedValues={store.generationOptions.checklist ? [generationOptions.checklist[0].id] : []}
                         onChange={(id, checked) => handleGenerationOptionChange('checklist', id, checked)}
-                        labelClassName="text-gray-300"
-                        checkboxClassName="bg-gray-600 border-gray-500 text-indigo-400 focus:ring-indigo-500"
+                         // Updated styling
+                        fieldsetClassName="mb-0"
+                        legendClassName="text-slate-300 !mb-3"
+                        labelClassName="text-slate-200"
+                        checkboxClassName="bg-slate-600 border-slate-500 text-indigo-400 focus:ring-indigo-500 rounded"
                       />
                     </div>
-                  </>
+                  </div>
               );
           default: return null;
       }
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-200 flex flex-col items-center justify-center p-4">
-      <header className="w-full max-w-2xl mb-6">
-        <h1 className="text-2xl font-bold text-white text-left">CAPS</h1>
+    // Updated main container styling
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-slate-200 flex flex-col items-center justify-center p-4 font-sans">
+      <header className="w-full max-w-2xl mb-8"> {/* Increased margin */}
+        <h1 className="text-3xl font-bold text-slate-100 text-left">CAPS</h1> {/* Increased size */}
       </header>
 
-      <main className="w-full max-w-2xl p-8 bg-gray-800 rounded-lg shadow-xl relative overflow-hidden" style={{ minHeight: '450px' }}>
+      {/* Updated main card styling */}
+      <main className="w-full max-w-2xl p-10 bg-slate-800/60 backdrop-blur-sm rounded-xl shadow-2xl relative overflow-hidden ring-1 ring-white/10" style={{ minHeight: '480px' }}>
 
         {store.error && (
-          <div className="absolute top-0 left-0 right-0 bg-red-800 border-b border-red-600 text-red-100 px-4 py-2 text-sm z-20" role="alert">
-            <strong className="font-bold">Error: </strong> {store.error}
+          // Adjusted error styling
+          <div className="absolute top-0 left-0 right-0 bg-red-500/30 border-b border-red-500/50 text-red-100 px-4 py-2 text-sm z-20 flex items-center justify-center" role="alert">
+            <span className="font-semibold mr-2">Error:</span> {store.error}
           </div>
         )}
 
@@ -332,31 +361,30 @@ export default function HomePage() {
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{
-              x: { type: "spring", stiffness: 300, damping: 30 },
-              opacity: { duration: 0.2 }
-            }}
-            className="absolute top-0 left-0 w-full h-full p-8 pt-12" // Adjust padding if error shown
+            transition={transitionConfig} // Use updated transition config
+            // Adjusted padding for error message space
+            className={`absolute top-0 left-0 w-full h-full p-10 ${store.error ? 'pt-16' : 'pt-10'}`}
           >
             {renderStepContent()}
           </motion.div>
         </AnimatePresence>
 
-        {/* Navigation Buttons - positioned absolutely within the main container */}
-        <div className="absolute bottom-6 left-8 right-8 flex justify-between items-center z-10">
+        {/* Navigation Buttons */}
+        <div className="absolute bottom-8 left-10 right-10 flex justify-between items-center z-10"> {/* Increased bottom padding */}
           {store.currentStep > 0 ? (
             <button
               onClick={() => paginate(-1)}
-              className="text-indigo-400 hover:text-indigo-300 font-medium transition duration-150 ease-in-out"
+              className="text-indigo-400 hover:text-indigo-300 font-medium transition duration-150 ease-in-out disabled:opacity-50"
               disabled={store.isLoading}
             >
               Previous
             </button>
-          ) : <div /> /* Placeholder to keep Next button right-aligned */} 
+          ) : <div /> /* Placeholder */}
 
           <button
             onClick={() => store.currentStep === TOTAL_STEPS - 1 ? handleSubmit(new Event('submit') as any) : paginate(1)}
-            className={`bg-indigo-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:bg-indigo-800 disabled:cursor-not-allowed transition duration-150 ease-in-out ${store.isLoading ? 'animate-pulse' : ''}`}
+            // Updated button styling
+            className={`bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-60 disabled:bg-indigo-800/50 disabled:cursor-not-allowed transition duration-150 ease-in-out shadow-md ${store.isLoading ? 'animate-pulse' : ''}`}
             disabled={store.isLoading}
           >
             {store.isLoading
@@ -367,12 +395,13 @@ export default function HomePage() {
 
       </main>
 
-      {/* Optional: Progress Indicator */}
-      <div className="flex justify-center space-x-2 mt-4">
+      {/* Progress Indicator Styling */}
+      <div className="flex justify-center space-x-3 mt-6"> {/* Increased spacing/margin */}
         {[...Array(TOTAL_STEPS)].map((_, i) => (
           <div
             key={i}
-            className={`w-2 h-2 rounded-full ${store.currentStep === i ? 'bg-indigo-400' : 'bg-gray-600'}`}
+            // Nicer progress dots
+            className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${store.currentStep === i ? 'bg-indigo-400' : 'bg-slate-600 hover:bg-slate-500'}`}
           />
         ))}
       </div>
