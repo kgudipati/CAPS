@@ -414,16 +414,57 @@ Example sections for Data Spec:
 - PII / Sensitive Data Handling
 `;
 
-const integrationExampleStructure = `
-Example sections for Integration Spec:
-- System Overview (Involved systems)
-- Integrated Systems Details
-- Data Exchange Format (e.g., JSON, XML)
-- API Endpoint Details (Consumed/Exposed)
-- Authentication/Authorization Methods
-- Sequence Diagram (Description/Placeholder)
-- Error Handling Strategy
-- Monitoring & Logging Requirements
+// --- NEW: Specific prompt details for Integration Specification ---
+const integrationSpecStructure = `
+Structure the Third-Party Integration Specification with the following sections using Markdown headings:
+
+## 1. Integration Overview
+   - **Third-Party Service:** [Name of the service being integrated, e.g., Stripe, SendGrid, Twilio]
+   - **Purpose:** [Briefly state what this integration achieves for the project, e.g., "Process payments", "Send transactional emails", "Send SMS notifications"]
+
+## 2. Use Case(s)
+   - [Describe the specific scenarios or features within your application that trigger or rely on this integration.]
+   - **Example:** "When a user completes an order, their payment details are sent to Stripe to process the transaction.", "When a new user signs up, a welcome email is sent via SendGrid."
+
+## 3. Authentication Method
+   - [Describe how your application authenticates with the third-party service.]
+   - **Method:** [e.g., API Key (Secret Key), OAuth 2.0 (Client Credentials Grant, Authorization Code Grant), Webhook Signatures]
+   - **Key Storage:** [Mention how sensitive credentials like API keys are stored securely (e.g., "Stored in environment variables, accessed only server-side")]
+
+## 4. Endpoints / SDK Methods Used
+   - [List the specific API endpoints or SDK methods of the third-party service that your application will interact with.]
+   - **Example (Stripe - Creating a Payment Intent):**
+     - *Method/Endpoint:* \`POST /v1/payment_intents\` (or SDK equivalent: \`stripe.paymentIntents.create(...)\`)
+     - *Key Parameters Sent:* \`amount\`, \`currency\`, \`customer\`, \`payment_method_types\`
+     - *Key Data Received:* \`id\`, \`client_secret\`, \`status\`
+   - [List other relevant endpoints/methods.]
+
+## 5. Rate Limits & Quotas
+   - [Document known rate limits or usage quotas for the third-party service.]
+   - **Limits:** [e.g., "100 API calls per second (live mode)", "10,000 emails per month (free tier")]
+   - **Strategy:** [How will your application handle these limits? (e.g., "Implement exponential backoff on rate limit errors", "Monitor usage via provider dashboard", "Cache responses where possible")]
+
+## 6. Failure Modes & Retry Strategy
+   - [Describe potential failures and how your application should respond.]
+   - **Timeout:** [What happens if the API call times out? (e.g., "Retry once after 2 seconds. If fails again, log error and notify user/admin")]
+   - **API Errors (e.g., 5xx):** [How are server errors from the third-party handled? (e.g., "Retry with exponential backoff for 5xx errors. Log error.")]
+   - **Invalid Requests (e.g., 4xx):** [How are client-side errors handled? (e.g., "Do not retry 4xx errors. Log error details, potentially flag data as problematic.")]
+   - **Webhook Failures (if applicable):** [How are failures in receiving/processing webhooks handled? (e.g., "Queue failed webhook events for later reprocessing")]
+
+## 7. Data Mapping
+   - [Describe how data fields in your application map to fields in the third-party service, if applicable.]
+   - **Example (User Data):**
+     | Your System Field | Third-Party Field                     | Notes                                 |
+     |-------------------|---------------------------------------|---------------------------------------|
+     | \`user.email\`      | \`stripeCustomer.email\`              | Used for receipts                   |
+     | \`user.id\`         | \`stripeCustomer.metadata.appUserId\` | Link back to internal user ID       |
+
+## 8. Security Considerations
+   - [Outline security measures related to the integration.]
+   - **API Key Security:** [Reiterate secure storage (env vars) and restricted server-side access.]
+   - **Data Sanitization:** [Mention sanitizing data sent *to* the third party.]
+   - **Webhook Security (if applicable):** [Verify webhook signatures to ensure authenticity.]
+   - **Least Privilege:** [Ensure API keys/OAuth scopes grant only necessary permissions.]
 `;
 
 // Updated defaultSpecStructure using the examples above
@@ -438,11 +479,11 @@ ${tpsExampleStructure}
 *If {specFocus} is UI/UX Specification:*
 ${uiUxSpecStructure}
 
-*If {specFocus} is Data Specification:**
+*If {specFocus} is Data Specification:*
 ${dataExampleStructure}
 
-*If {specFocus} is Integration Specification:*\
-${integrationExampleStructure}
+*If {specFocus} is Integration Specification:*
+${integrationSpecStructure}
 `;
 
 // Combine base, structure, and end prompts
@@ -484,7 +525,7 @@ export function getSpecInput(specType: keyof ProjectInputData['generationOptions
             break;
         case 'integration':
             specFocus = "Integration Specification";
-            // Default structure used
+            specStructure = integrationSpecStructure;
             break;
     }
 
