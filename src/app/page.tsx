@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image'; // Import Image component
 import TextAreaInput from '@/components/TextAreaInput';
 import CheckboxGroup from '@/components/CheckboxGroup';
 import BadgeInput from '@/components/BadgeInput'; // Import BadgeInput
@@ -282,11 +283,8 @@ export default function HomePage() {
                   </div>
               );
            case 3: // Use BadgeInput for Tech Stack
-  return (
-                  <div className="space-y-8">
-                    <h3 className="text-lg font-medium text-neutral-200 mb-1">Technology Stack (Optional)</h3>
-                    <p className="text-sm text-neutral-400 mb-4">Select or type technologies you plan to use.</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+              return (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6 pt-2"> {/* Add padding-top if needed */} 
                        <BadgeInput
                             label="Frontend"
                             id="tech-frontend"
@@ -343,7 +341,6 @@ export default function HomePage() {
                             wrapperClassName="mb-0"
                        />
                     </div>
-        </div>
               );
            case 4:
               return (
@@ -396,8 +393,15 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-900 to-neutral-800 text-neutral-200 p-6 sm:p-8 font-sans flex flex-col">
-      <header className="w-full mb-8 flex-shrink-0">
-        <h1 className="text-3xl font-bold text-neutral-100">CAPS</h1>
+      <header className="w-full mb-8 flex-shrink-0 flex items-center"> {/* Use flex to align logo */}
+        {/* Replace h1 with Image */}
+        <Image 
+          src="/logo.png" 
+          alt="CAPS Logo"
+          width={120} // Adjust as needed
+          height={40} // Adjust as needed (e.g., matching h-10)
+          priority // Load logo quickly
+        />
       </header>
 
       <div className="flex-grow flex items-center justify-center w-full overflow-hidden">
