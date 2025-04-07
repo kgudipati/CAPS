@@ -54,7 +54,8 @@ export async function POST(request: Request) {
 
   try {
     const filesToZip: FileData[] = [];
-    const generationPromises: Promise<void>[] = [];
+    const generationResults: { [key: string]: string } = {}; // Store results for context
+    const independentPromises: Promise<void>[] = [];
 
     // 1. Add static rules
     console.log('Reading static rule files...');
@@ -64,99 +65,110 @@ export async function POST(request: Request) {
     }
     console.log('Static rules added.');
 
-    // 2. Prepare and queue AI generation tasks using LangChain
-    console.log('Preparing AI generation tasks...');
+    // 2. Prepare and queue INDEPENDENT AI generation tasks (Rules, Specs)
+    console.log('Preparing independent AI generation tasks...');
 
     // Generate Project Rules if selected
     if (requestBody.generationOptions.rules) {
-        generationPromises.push((async () => {
+        independentPromises.push((async () => {
             try {
                 const inputVars = getProjectRulesInput(requestBody);
-                // Pass selected provider to LangChain function
-                const content = await generateContentLangChain(
-                    requestBody.selectedAIProvider,
-                    projectRulesTemplate,
-                    inputVars,
-                    'Project Rules' // Task Identifier
-                );
-                filesToZip.push({ path: '.cursor/rules/project-specific-rules.mdc', content: content });
+                const content = await generateContentLangChain(requestBody.selectedAIProvider, projectRulesTemplate, inputVars);
+                const path = '.cursor/rules/project-specific-rules.mdc';
+                filesToZip.push({ path, content });
+                generationResults['rules'] = content; // Store result
                 console.log('Project-specific rules generated.');
             } catch (err) {
                 console.error('Failed to generate project rules:', err);
+                generationResults['rules'] = `Error generating rules: ${err instanceof Error ? err.message : err}`;
             }
         })());
     }
 
     // Generate Specs if selected
-    for (const specType in requestBody.generationOptions.specs) {
-        const key = specType as keyof GenerationOptions['specs'];
-        if (requestBody.generationOptions.specs[key]) {
-            generationPromises.push((async () => {
+    const specTypes = Object.keys(requestBody.generationOptions.specs) as Array<keyof GenerationOptions['specs']>;
+    for (const specType of specTypes) {
+        if (requestBody.generationOptions.specs[specType]) {
+            independentPromises.push((async () => {
                 try {
-                    const inputVars = getSpecInput(key, requestBody);
-                     // Pass selected provider to LangChain function
-                    const content = await generateContentLangChain(
-                        requestBody.selectedAIProvider,
-                        specTemplate,
-                        inputVars,
-                        `${key.toUpperCase()} Spec` // Task Identifier
-                    );
-                    const match = content.match(/--- BEGIN .*? ---\n?([\s\S]*?)\n?--- END .*? ---/);
-                    const finalContent = match ? match[1].trim() : content;
-                    let filePath = 'docs/';
-                    if (key === 'prd') filePath += 'prd.md';
-                    else if (key === 'tps') filePath += 'tps.md';
-                    else if (key === 'uiUx') filePath += 'ui-ux-spec.md';
-                    else if (key === 'technical') filePath += 'technical-spec.md';
-                    else if (key === 'data') filePath += 'data-spec.md';
-                    else if (key === 'integration') filePath += 'integration-spec.md';
-                    else return;
-                    filesToZip.push({ path: filePath, content: finalContent });
-                    console.log(`${key} spec generated.`);
+                    const inputVars = getSpecInput(specType, requestBody);
+                    const rawContent = await generateContentLangChain(requestBody.selectedAIProvider, specTemplate, inputVars);
+                    // Extract content between BEGIN/END markers, fallback to raw content
+                    const match = rawContent.match(/--- BEGIN .*? ---\n?([sS]*?)\n?--- END .*? ---/);
+                    const content = match ? match[1].trim() : rawContent.trim();
+
+                    let fileName = '';
+                    if (specType === 'prd') fileName = 'prd.md';
+                    else if (specType === 'tps') fileName = 'tps.md';
+                    else if (specType === 'uiUx') fileName = 'ui-ux-spec.md';
+                    else if (specType === 'technical') fileName = 'technical-spec.md';
+                    else if (specType === 'data') fileName = 'data-spec.md';
+                    else if (specType === 'integration') fileName = 'integration-spec.md';
+                    else return; // Skip if unknown spec type somehow
+
+                    const path = `docs/${fileName}`;
+                    filesToZip.push({ path, content });
+                    generationResults[specType] = content; // Store result
+                    console.log(`${specType} spec generated.`);
                  } catch (err) {
-                    console.error(`Failed to generate ${key} spec:`, err);
+                    console.error(`Failed to generate ${specType} spec:`, err);
+                    generationResults[specType] = `Error generating ${specType} spec: ${err instanceof Error ? err.message : err}`;
                  }
             })());
         }
     }
 
-    // Generate Checklist if selected
+    // 3. Wait for all INDEPENDENT AI generations to complete
+    console.log(`Waiting for ${independentPromises.length} independent AI generation tasks...`);
+    await Promise.all(independentPromises);
+    console.log('All independent AI generation tasks finished.');
+
+    // 4. Generate Checklist if selected (SEQUENTIAL, uses results)
     if (requestBody.generationOptions.checklist) {
-        generationPromises.push((async () => {
-            try {
-                const inputVars = getChecklistInput(requestBody);
-                // Pass selected provider to LangChain function
-                const content = await generateContentLangChain(
-                    requestBody.selectedAIProvider,
-                    checklistTemplate,
-                    inputVars,
-                    'Checklist' // Task Identifier
-                 );
-                filesToZip.push({ path: 'checklist.md', content: content });
-                console.log('Checklist generated.');
-            } catch (err) {
-                console.error('Failed to generate checklist:', err);
+        console.log('Preparing checklist generation task with context...');
+        try {
+            // Prepare context from previous results
+            let context = "## Previously Generated Artifacts Context:\n\n";
+            if (generationResults['rules']) {
+                context += "### Project Rules:\n" + generationResults['rules'] + "\n\n";
             }
-        })());
+            const generatedSpecs = specTypes
+                .filter(specType => generationResults[specType] && !generationResults[specType].startsWith('Error'))
+                .map(specType => `### ${specType.toUpperCase()} Specification:\n${generationResults[specType]}`)
+                .join("\n\n");
+
+            if (generatedSpecs) {
+                context += "### Specifications:\n" + generatedSpecs;
+            } else if (!generationResults['rules']) {
+                context = "No prior context generated."; // Handle case where nothing was generated before checklist
+            }
+
+            const inputVars = getChecklistInput(requestBody, context.trim()); // Pass context
+            const content = await generateContentLangChain(requestBody.selectedAIProvider, checklistTemplate, inputVars);
+            filesToZip.push({ path: 'checklist.md', content });
+            console.log('Checklist generated with context.');
+        } catch (err) {
+            console.error('Failed to generate checklist:', err);
+            // Optionally add an error file or skip adding the checklist
+            filesToZip.push({ path: 'checklist.md', content: `Error generating checklist: ${err instanceof Error ? err.message : err}` });
+        }
     }
 
-    // 3. Wait for all AI generations to complete
-    console.log(`Waiting for ${generationPromises.length} AI generation tasks...`);
-    await Promise.all(generationPromises);
-    console.log('All AI generation tasks finished.');
-
-    // 4. Create ZIP archive
+    // 5. Create ZIP archive
     console.log('Creating ZIP archive...');
     const requestedDynamic = requestBody.generationOptions.rules || requestBody.generationOptions.checklist || Object.values(requestBody.generationOptions.specs).some(v => v);
-    if (filesToZip.length === STATIC_RULES.length && requestedDynamic && generationPromises.length > 0) {
-        console.warn("No dynamic content was successfully generated or selected despite being requested.");
-        return NextResponse.json({ error: 'Failed to generate the selected dynamic content. Please check server logs or API key configuration.' }, { status: 500 }); // Added key hint
-    }
+    const successfulGenerations = Object.values(generationResults).some(content => !content.startsWith('Error')) || (requestBody.generationOptions.checklist && filesToZip.some(f => f.path === 'checklist.md' && !f.content.startsWith('Error')));
+
+    // Adjust error check: Ensure *some* dynamic content was generated if requested
+    if (requestedDynamic && !successfulGenerations) {
+         console.warn("No dynamic content was successfully generated despite being requested.");
+         return NextResponse.json({ error: 'Failed to generate the selected dynamic content. Please check server logs or API key configuration.' }, { status: 500 });
+     }
 
     const zipBuffer = await createZipArchive(filesToZip);
     console.log('ZIP archive created.');
 
-    // 5. Return ZIP file
+    // 6. Return ZIP file
     return new NextResponse(zipBuffer, {
       status: 200,
       headers: {

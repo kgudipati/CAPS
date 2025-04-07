@@ -32,6 +32,8 @@ interface ProjectBaseInput {
     features: string;
     targetUsers: string;
     techStackInfo: string;
+    // Add context placeholder for checklist
+    generatedContext?: string;
 }
 
 export const projectRulesTemplate = `
@@ -582,132 +584,47 @@ export function getSpecInput(specType: keyof ProjectInputData['generationOptions
 // --- Checklist Prompt ---
 
 export const checklistTemplate = `
-You are a senior AI software engineer tasked with generating a **highly detailed and comprehensive Test-Driven Development (TDD) implementation checklist** in Markdown format with checkboxes ([ ]). The checklist must strictly follow TDD methodology.
+Generate a **highly detailed and comprehensive Test-Driven Development (TDD)** implementation checklist in Markdown format with checkboxes ([ ]).
+This checklist is intended to guide an AI assistant or developer meticulously through the **coding and implementation phase ONLY**.
+**Strictly exclude** any tasks related to documentation generation, user studies/feedback, CI/CD pipeline setup, deployment processes, infrastructure provisioning, project management overhead, or any other non-coding activities. The focus is 100% on writing the code.
 
-**Your Output Must:**
-- Use Markdown formatting
-- Use nested headings and task groups (##, ###, ####)
-- Structure the checklist into logical, testable, dependency-aware blocks
-
-**Scope & Focus:**
-- Focus exclusively on the **coding and testing phase** of the project.
-- DO NOT include tasks for:
-  - Documentation writing
-  - User research
-  - CI/CD setup
-  - Deployment
-  - Infrastructure provisioning
-  - Project planning or meetings
-
-This checklist should serve as an **execution plan for a developer or AI coding agent** working end-to-end to implement the system described.
-
----
-
-## CORE PRINCIPLES FOR CHECKLIST GENERATION:
-
-### 1. DECOMPOSE THE SYSTEM
-Break the project into logical implementation areas based on user-provided context:
-- Data Models / DB Schema
-- Core Backend Logic & Services
-- API Routes & Validation
-- Utility Functions
-- State Management (if applicable)
-- UI Components (if applicable)
-- Frontend-Backend Integration (if applicable)
-- CLI Tools / Scripts / Libraries (if applicable)
-
-This project could be:
-- A backend-only API
-- A CLI tool
-- A full-stack app
-- A framework or SDK
-Generate the checklist accordingly.
-
----
-
-### 2. FOLLOW STRICT TDD WORKFLOW FOR EACH UNIT:
-
-For **every implementable unit**, follow this sequence:
-1. **TEST** — Write a failing test for the smallest unit of functionality
-2. **IMPL** — Write only the code needed to pass the test
-3. **REFACTOR** — (Optional) Refactor the test or code once it passes
-4. **Repeat** — For edge cases, validation, errors, etc.
-
-Each item should look like:
-- [ ] TEST: {Component/Service} - Write failing test for {specific case}
-- [ ] IMPL: {Component/Service} - Implement logic to pass test
-- [ ] REFACTOR: {Component/Service} - Improve logic, naming, or error handling
-
----
-
-### 3. USE HIERARCHICAL STRUCTURE:
-
-Organize checklist using Markdown headers. Example:
-
-## Backend
-### Database Models
-#### User Model
-- [ ] TEST: User model - unique email constraint
-- [ ] IMPL: Create schema and enforce constraint
-- [ ] TEST: User model - password hashing behavior
-- [ ] IMPL: Implement before-save hook
-
-### Services
-#### Auth Service
-- [ ] TEST: loginUser - failing test for wrong password
-- [ ] IMPL: Implement password validation
-
----
-
-### 4. EXPLICITLY HANDLE:
-- Input validation
-- Error cases
-- Security (auth checks, sensitive data handling)
-- Edge cases (e.g., rate limits, concurrency, null inputs)
-
----
-
-### 5. DESCRIPTIVE & IMPLEMENTABLE TASKS
-
-Avoid vague tasks like:
-- [ ] Build authentication
-
-Instead use:
-- [ ] TEST: Auth Service - loginUser - invalid credentials
-- [ ] IMPL: loginUser - check credentials, return 401
-- [ ] TEST: Auth API - POST /api/auth/login - missing fields
-- [ ] IMPL: Auth API - validate request payload
-
----
+**Core Principles for Checklist Generation:**
+// ... (principles 1-6) ...
 
 **Project Details:**
-
-Project Description:  
+Project Description:
 {projectDescription}
 
-Problem Solved:  
+Problem Solved:
 {problemStatement}
 
-Target Users:  
+Target Users:
 {targetUsers}
 
-Key Features:  
+Key Features:
 {features}
 
-Tech Stack:  
+Tech Stack:
 {techStackInfo}
 
----
+**Context from Previous Generation Steps:**
+{generatedContext} // New placeholder for context
 
 --- BEGIN CHECKLIST ---
 
-Generate a comprehensive, dependency-aware, TDD-style coding checklist based strictly on the above principles and project details. Use markdown formatting. Structure by major categories (e.g., Backend, Frontend, Services, etc.) and sub-categories (e.g., Models, API Routes, Utilities, UI Components). Include detailed test → implement → refactor steps for each.
+Generate the comprehensive TDD implementation checklist based *strictly* on the above principles, project details, and provided context. Start immediately with the first category heading.
 
 --- END CHECKLIST ---
 `;
 
-
-// Function to get input for checklist (same as project rules)
-export function getChecklistInput(inputs: ProjectInputData): ProjectBaseInput {
-    return getProjectRulesInput(inputs); // Reuses the same input structure
+// Function to get input for checklist - Updated to accept context
+export function getChecklistInput(inputs: ProjectInputData, generatedContext?: string): ProjectBaseInput {
+    return {
+        projectDescription: inputs.projectDescription,
+        problemStatement: inputs.problemStatement,
+        features: inputs.features,
+        targetUsers: inputs.targetUsers,
+        techStackInfo: formatTechStack(inputs.techStack),
+        generatedContext: generatedContext || "No preceding artifacts were generated or requested.", // Add context here
+    };
 } 
