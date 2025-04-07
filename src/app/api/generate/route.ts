@@ -17,6 +17,8 @@ import {
 } from '@/lib/prompts';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models'; // Import BaseChatModel
 import pLimit from 'p-limit'; // Import p-limit
+import NodeCache from 'node-cache'; // Import node-cache
+import crypto from 'crypto'; // Import crypto for hashing
 
 // Extend the base Zod schema to include the AI provider selection
 const apiInputSchema = baseSchema.extend({
@@ -78,6 +80,19 @@ type GenerationTask = RulesTask | SpecTask | ChecklistTask;
 // --- CONCURRENCY LIMIT --- 
 const CONCURRENCY = 3; // Limit to 3 simultaneous AI calls
 
+// --- Define which tasks might use a simpler model ---
+const SIMPLE_MODEL_TASK_TYPES: GenerationTask['type'][] = ['rules', 'checklist'];
+
+// --- Initialize Cache ---
+const aiCache = new NodeCache({ stdTTL: 3600 }); // Cache for 1 hour
+
+// --- Helper to create cache key ---
+function createCacheKey(provider: string, model: string, template: string, inputs: object): string {
+    const inputString = JSON.stringify(inputs);
+    const hash = crypto.createHash('sha256').update(inputString).digest('hex');
+    return `${provider}:${model}:${template.substring(0, 50)}:${hash}`;
+}
+
 export async function POST(request: Request) {
   console.log('Received POST request to /api/generate');
   let requestJson;
@@ -100,19 +115,40 @@ export async function POST(request: Request) {
   const requestBody: ApiInputData = validationResult.data;
   console.log('Request body validated successfully.');
 
-  let llm: BaseChatModel;
-  let providerName: string;
-  let modelName: string;
+  // --- LLM Instantiation --- 
+  let primaryLlm: BaseChatModel;
+  let primaryProviderName: string;
+  let primaryModelName: string;
+  let simpleLlm: BaseChatModel | null = null;
+  let simpleProviderName: string | null = null;
+  let simpleModelName: string | null = null;
 
   try {
-    // --- Instantiate LLM ONCE --- 
+    // --- Instantiate Primary LLM ONCE ---
     try {
-        ({ llm, providerName, modelName } = getLlm(requestBody.selectedAIProvider));
+        ({ llm: primaryLlm, providerName: primaryProviderName, modelName: primaryModelName } = getLlm(requestBody.selectedAIProvider));
     } catch (configError) {
-        console.error("LLM Configuration Error:", configError);
-        // Re-throw config errors to be caught by the main try/catch
-        if (configError instanceof Error) throw configError;
-        throw new Error("Unknown AI Configuration Error.");
+        console.error("Primary LLM Configuration Error:", configError);
+        if (configError instanceof Error) throw configError; // Re-throw
+        throw new Error("Unknown AI Configuration Error for Primary LLM.");
+    }
+
+    // --- Try to Instantiate Optional Simple LLM ---
+    try {
+        // Attempt to get config using _SIMPLE suffix
+        const simpleConfig = getLlm(requestBody.selectedAIProvider, '_SIMPLE');
+        // Only use it if the model name is actually different from the primary
+        if (simpleConfig.modelName !== primaryModelName) {
+            simpleLlm = simpleConfig.llm;
+            simpleProviderName = simpleConfig.providerName;
+            simpleModelName = simpleConfig.modelName;
+            console.log(`Successfully configured secondary simple model: ${simpleProviderName} - ${simpleModelName}`);
+        } else {
+            console.log('Simple model configuration is the same as primary or not found, using primary for all tasks.');
+        }
+    } catch (configError) {
+        // It's okay if the simple model config is missing/errors, just log and fallback to primary
+        console.warn("Optional Simple LLM Configuration failed (will use primary for all tasks):", configError instanceof Error ? configError.message : configError);
     }
 
     // --- Prepare Common Inputs ONCE --- 
@@ -174,47 +210,80 @@ export async function POST(request: Request) {
         });
     }
 
-    // 3. Execute tasks with concurrency limit
+    // 3. Execute tasks with concurrency limit AND CACHING
     const limit = pLimit(CONCURRENCY);
-    console.log(`Executing ${generationTasksToRun.length} AI tasks with concurrency limit ${CONCURRENCY}...`);
+    console.log(`Executing ${generationTasksToRun.length} AI tasks (concurrency: ${CONCURRENCY}, cache enabled)...`);
 
     const taskPromises = generationTasksToRun.map((task) => {
+        // Determine LLM selection and prepare inputs *before* cache check/limit
+        let useLlm: BaseChatModel;
+        let useProviderName: string;
+        let useModelName: string;
+        if (simpleLlm && simpleProviderName && simpleModelName && SIMPLE_MODEL_TASK_TYPES.includes(task.type)) {
+            useLlm = simpleLlm;
+            useProviderName = simpleProviderName;
+            useModelName = simpleModelName;
+        } else {
+            useLlm = primaryLlm;
+            useProviderName = primaryProviderName;
+            useModelName = primaryModelName;
+        }
+
+        let inputVariables: ProjectBaseInput | SpecInput;
+        if (task.type === 'spec') {
+            inputVariables = task.getInputVars(task.specType, requestBody, techStackInfo);
+        } else {
+            inputVariables = task.getInputVars(requestBody, techStackInfo);
+        }
+
+        // --- CACHE CHECK --- 
+        const cacheKey = createCacheKey(useProviderName, useModelName, task.template, inputVariables);
+        const cachedResult = aiCache.get<FileData>(cacheKey);
+
+        if (cachedResult) {
+            console.log(`Cache HIT for task ${task.key}`);
+            // Return a resolved promise directly if cache hit, matching the expected return type
+            return Promise.resolve({ key: task.key, fileData: cachedResult, error: undefined });
+        }
+        // --- END CACHE CHECK --- 
+
+        // If cache miss, wrap the AI call in the limiter
+        console.log(`Cache MISS for task ${task.key}, queueing AI call...`);
         return limit(async (): Promise<{ key: keyof GenerationStatusMap; fileData: FileData | null; error?: any }> => {
             try {
-                let inputVariables: ProjectBaseInput | SpecInput;
-                if (task.type === 'spec') {
-                    inputVariables = task.getInputVars(task.specType, requestBody, techStackInfo);
-                } else {
-                    inputVariables = task.getInputVars(requestBody, techStackInfo);
-                }
-
+                // Inputs already prepared outside
                 const content = await generateContentLangChain(
-                    llm,
-                    providerName,
-                    modelName,
+                    useLlm,
+                    useProviderName,
+                    useModelName,
                     task.template,
                     inputVariables
                 );
 
-                // Special handling for spec content extraction
                 let finalContent = content;
                 if (task.type === 'spec') {
                     const match = content.match(/--- BEGIN .*? ---\n?([\s\S]*?)\n?--- END .*? ---/);
                     finalContent = match ? match[1].trim() : content;
                 }
 
-                console.log(`${task.key} generated successfully.`);
-                return { key: task.key, fileData: { path: task.filePath, content: finalContent } };
+                const resultData: FileData = { path: task.filePath, content: finalContent };
+
+                // --- CACHE SET --- 
+                aiCache.set(cacheKey, resultData);
+                console.log(`Task ${task.key} generated successfully using ${useModelName} (and cached).`);
+                // --- END CACHE SET --- 
+
+                return { key: task.key, fileData: resultData };
             } catch (err) {
                 console.error(`Failed to generate ${task.key}:`, err);
-                return { key: task.key, fileData: null, error: err }; // Return error status
+                return { key: task.key, fileData: null, error: err };
             }
         });
     });
 
-    // Wait for all limited promises to settle
+    // Wait for all promises (cached or limited) to settle
     const settledResults = await Promise.allSettled(taskPromises);
-    console.log('All AI generation tasks settled.');
+    console.log('All generation tasks settled.');
 
     // 4. Process results and build status map
     const generationResults: Partial<GenerationStatusMap> = {};

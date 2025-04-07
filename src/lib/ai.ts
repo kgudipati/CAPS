@@ -7,19 +7,23 @@ import { PromptTemplate } from "@langchain/core/prompts";
 import { AIProvider } from "./store"; // Import AIProvider type
 
 // Helper function to select the LLM based on SELECTED provider
-export function getLlm(selectedProvider: AIProvider): {
+// Allows specifying an optional model name suffix for env vars (e.g., "_SIMPLE")
+export function getLlm(selectedProvider: AIProvider, modelNameSuffix: string = ''): {
     llm: BaseChatModel;
     providerName: string;
     modelName: string;
 } {
     const temperature = 0.7; // Common setting
 
+    const getEnvVar = (baseName: string) => process.env[`${baseName}${modelNameSuffix}`];
+
     switch (selectedProvider) {
         case 'anthropic': {
             const apiKey = process.env.ANTHROPIC_API_KEY;
-            if (!apiKey) throw new Error(`AI Configuration Error: ANTHROPIC_API_KEY is missing in .env.local for selected provider '${selectedProvider}'.`);
-            const modelName = process.env.CLAUDE_MODEL_NAME || "claude-3-sonnet-20240229";
-            console.log(`Using Anthropic provider with model ${modelName}`);
+            if (!apiKey) throw new Error(`AI Configuration Error: ANTHROPIC_API_KEY is missing in .env.local`);
+            // Use specific model env var if suffix provided, otherwise default
+            const modelName = getEnvVar('CLAUDE_MODEL_NAME') || process.env.CLAUDE_MODEL_NAME || "claude-3-sonnet-20240229";
+            console.log(`Using Anthropic provider with model ${modelName} (suffix: '${modelNameSuffix}')`);
             return {
                 llm: new ChatAnthropic({ apiKey: apiKey, modelName: modelName, temperature: temperature }),
                 providerName: "Anthropic",
@@ -28,9 +32,9 @@ export function getLlm(selectedProvider: AIProvider): {
         }
         case 'google': {
             const apiKey = process.env.GOOGLE_API_KEY;
-            if (!apiKey) throw new Error(`AI Configuration Error: GOOGLE_API_KEY is missing in .env.local for selected provider '${selectedProvider}'.`);
-            const modelName = process.env.GEMINI_MODEL_NAME || "gemini-pro";
-            console.log(`Using Google provider with model ${modelName}`);
+            if (!apiKey) throw new Error(`AI Configuration Error: GOOGLE_API_KEY is missing in .env.local`);
+            const modelName = getEnvVar('GEMINI_MODEL_NAME') || process.env.GEMINI_MODEL_NAME || "gemini-pro";
+            console.log(`Using Google provider with model ${modelName} (suffix: '${modelNameSuffix}')`);
             return {
                 llm: new ChatGoogleGenerativeAI({ apiKey: apiKey, model: modelName, temperature: temperature }),
                 providerName: "Google",
@@ -39,10 +43,10 @@ export function getLlm(selectedProvider: AIProvider): {
         }
         case 'openai': {
             const apiKey = process.env.OPENAI_API_KEY;
-            if (!apiKey) throw new Error(`AI Configuration Error: OPENAI_API_KEY is missing in .env.local for selected provider '${selectedProvider}'.`);
-            const modelName = process.env.OPENAI_MODEL_NAME || "gpt-3.5-turbo";
+            if (!apiKey) throw new Error(`AI Configuration Error: OPENAI_API_KEY is missing in .env.local`);
+            const modelName = getEnvVar('OPENAI_MODEL_NAME') || process.env.OPENAI_MODEL_NAME || "gpt-3.5-turbo";
             const baseURL = process.env.OPENAI_API_BASE;
-            console.log(`Using OpenAI provider with model ${modelName}${baseURL ? ` at ${baseURL}` : ''}`);
+            console.log(`Using OpenAI provider with model ${modelName}${baseURL ? ` at ${baseURL}` : ''} (suffix: '${modelNameSuffix}')`);
             return {
                 llm: new ChatOpenAI({ apiKey: apiKey, modelName: modelName, temperature: temperature, configuration: baseURL ? { baseURL } : undefined }),
                 providerName: "OpenAI",
@@ -50,7 +54,6 @@ export function getLlm(selectedProvider: AIProvider): {
             };
         }
         default: {
-            // Should not happen due to previous validation, but safeguard anyway
             throw new Error(`AI Configuration Error: Unsupported AI provider selected: ${selectedProvider}.`);
         }
     }
