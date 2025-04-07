@@ -373,18 +373,22 @@ export default function HomePage() {
                         labelClassName="text-neutral-200"
                         checkboxClassName="bg-neutral-600 border-neutral-500 text-teal-400 focus:ring-teal-500 rounded"
                       />
-                       <CheckboxGroup
-                        legend="Generate Checklist?"
-                        options={generationOptions.checklist}
-                        selectedValues={store.generationOptions.checklist ? [generationOptions.checklist[0].id] : []}
-                        onChange={(id, checked) => handleGenerationOptionChange('checklist', id, checked)}
-                        fieldsetClassName="mb-0"
-                        legendClassName="text-neutral-300 !mb-3"
-                        labelClassName="text-neutral-200"
-                        checkboxClassName="bg-neutral-600 border-neutral-500 text-teal-400 focus:ring-teal-500 rounded"
-                      />
+                       {/* Direct Checkbox for Single Checklist Option */}
+                       <div className="flex items-center mt-1"> {/* Add margin if needed */}
+                         <input
+                           id="gen-checklist"
+                           name="gen-checklist"
+                           type="checkbox"
+                           checked={!!store.generationOptions.checklist} // Use boolean value
+                           onChange={(e) => handleGenerationOptionChange('checklist', 'gen-checklist', e.target.checked)}
+                           className="h-4 w-4 rounded border-neutral-500 bg-neutral-600 text-teal-400 focus:ring-teal-500" // Use consistent checkbox classes
+                         />
+                         <label htmlFor="gen-checklist" className="ml-2 block text-sm font-medium text-neutral-200"> {/* Use consistent label classes */}
+                           Generate Task Checklist
+                         </label>
+                       </div>
                     </div>
-    </div>
+                  </div>
   );
           default: return null;
       }
