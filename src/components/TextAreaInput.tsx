@@ -18,7 +18,7 @@ const TextAreaInput: React.FC<TextAreaInputProps> = ({
   const defaultWrapperClasses = "mb-4";
   const defaultLabelClasses = "block text-sm font-medium text-neutral-300 mb-2";
   const defaultInputClasses =
-    "block w-full rounded-md shadow-sm border-neutral-600 bg-neutral-700 placeholder-neutral-400 text-neutral-100 focus:border-teal-500 focus:ring-teal-500 sm:text-sm";
+    "block w-full rounded-md shadow-sm border-neutral-600 bg-neutral-700 placeholder-neutral-400 text-neutral-100 focus:border-teal-500 focus:ring-teal-500 sm:text-sm px-3 py-2";
 
   return (
     <div className={`${defaultWrapperClasses} ${wrapperClassName}`.trim()}>
