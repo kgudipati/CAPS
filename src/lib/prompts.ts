@@ -1,13 +1,25 @@
 import { ProjectInputData, TechStack } from "@/types"; // Use correct ProjectInputData type
 
+// Define the actual shape of the tech stack data coming from the Zod schema
+type InputTechStack = Partial<{ [K in keyof TechStack]: string[] | undefined }>;
+
 // Helper function to format tech stack details
-function formatTechStack(techStack: Partial<TechStack>): string {
+function formatTechStack(techStack: InputTechStack): string {
     let stackDetails = "";
-    if (techStack.frontend) stackDetails += `Frontend: ${techStack.frontend}\n`;
-    if (techStack.backend) stackDetails += `Backend: ${techStack.backend}\n`;
-    if (techStack.database) stackDetails += `Database: ${techStack.database}\n`;
-    if (techStack.infrastructure) stackDetails += `Infrastructure/Hosting: ${techStack.infrastructure}\n`;
-    if (techStack.other) stackDetails += `Other Tools/Libraries: ${techStack.other}\n`;
+    // Helper to format each part of the stack
+    const formatPart = (label: string, items: string[] | undefined) => {
+        if (items && items.length > 0) {
+            return `${label}: ${items.join(', ')}\n`;
+        }
+        return "";
+    };
+
+    stackDetails += formatPart("Frontend", techStack.frontend);
+    stackDetails += formatPart("Backend", techStack.backend);
+    stackDetails += formatPart("Database", techStack.database);
+    stackDetails += formatPart("Infrastructure/Hosting", techStack.infrastructure);
+    stackDetails += formatPart("Other Tools/Libraries", techStack.other);
+
     return stackDetails.trim() ? `The user specified the following tech stack:\n${stackDetails.trim()}` : "The user did not specify a tech stack; suggest one if appropriate based on the project.";
 }
 
