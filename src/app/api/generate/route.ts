@@ -73,7 +73,12 @@ export async function POST(request: Request) {
             try {
                 const inputVars = getProjectRulesInput(requestBody);
                 // Pass selected provider to LangChain function
-                const content = await generateContentLangChain(requestBody.selectedAIProvider, projectRulesTemplate, inputVars);
+                const content = await generateContentLangChain(
+                    requestBody.selectedAIProvider,
+                    projectRulesTemplate,
+                    inputVars,
+                    'Project Rules' // Task Identifier
+                );
                 filesToZip.push({ path: '.cursor/rules/project-specific-rules.mdc', content: content });
                 console.log('Project-specific rules generated.');
             } catch (err) {
@@ -90,7 +95,12 @@ export async function POST(request: Request) {
                 try {
                     const inputVars = getSpecInput(key, requestBody);
                      // Pass selected provider to LangChain function
-                    const content = await generateContentLangChain(requestBody.selectedAIProvider, specTemplate, inputVars);
+                    const content = await generateContentLangChain(
+                        requestBody.selectedAIProvider,
+                        specTemplate,
+                        inputVars,
+                        `${key.toUpperCase()} Spec` // Task Identifier
+                    );
                     const match = content.match(/--- BEGIN .*? ---\n?([\s\S]*?)\n?--- END .*? ---/);
                     const finalContent = match ? match[1].trim() : content;
                     let filePath = 'docs/';
@@ -116,7 +126,12 @@ export async function POST(request: Request) {
             try {
                 const inputVars = getChecklistInput(requestBody);
                 // Pass selected provider to LangChain function
-                const content = await generateContentLangChain(requestBody.selectedAIProvider, checklistTemplate, inputVars);
+                const content = await generateContentLangChain(
+                    requestBody.selectedAIProvider,
+                    checklistTemplate,
+                    inputVars,
+                    'Checklist' // Task Identifier
+                 );
                 filesToZip.push({ path: 'checklist.md', content: content });
                 console.log('Checklist generated.');
             } catch (err) {

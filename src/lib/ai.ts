@@ -63,27 +63,35 @@ function getLlm(selectedProvider: AIProvider): {
  * @param selectedProvider The AI provider selected in the UI.
  * @param promptTemplateString The template string with placeholders.
  * @param inputVariables An object containing values for the placeholders.
+ * @param taskIdentifier Optional identifier for logging
  * @returns The generated text content.
  * @throws Throws an error if configuration is missing, API call fails, or returns an error.
  */
-export async function generateContentLangChain(selectedProvider: AIProvider, promptTemplateString: string, inputVariables: Record<string, any>): Promise<string> {
+export async function generateContentLangChain(
+    selectedProvider: AIProvider,
+    promptTemplateString: string,
+    inputVariables: Record<string, any>,
+    taskIdentifier?: string // Optional identifier for logging
+): Promise<string> {
     let llm: BaseChatModel;
     let providerName: string;
     let modelName: string;
+
+    const logPrefix = taskIdentifier ? `[${taskIdentifier}] ` : "";
 
     try {
         // Pass the selected provider to get the correct LLM instance and key
         ({ llm, providerName, modelName } = getLlm(selectedProvider));
     } catch (configError) {
-        console.error("LLM Configuration Error:", configError);
+        console.error(`${logPrefix}LLM Configuration Error:`, configError);
         if (configError instanceof Error) {
            // Pass config error message directly
            throw configError;
         }
-         throw new Error("Unknown AI Configuration Error.");
+         throw new Error(`${logPrefix}Unknown AI Configuration Error.`);
     }
 
-    console.log(`Invoking ${providerName} model ${modelName} via LangChain...`);
+    console.log(`${logPrefix}Invoking ${providerName} model ${modelName} via LangChain...`);
 
     try {
         const prompt = PromptTemplate.fromTemplate(promptTemplateString);
@@ -92,22 +100,22 @@ export async function generateContentLangChain(selectedProvider: AIProvider, pro
         const result = await chain.invoke(inputVariables);
 
         if (result === undefined || result === null) {
-            throw new Error("AI generation failed: No content received from the chain.");
+            throw new Error(`${logPrefix}AI generation failed: No content received from the chain.`);
         }
-        console.log(`LangChain generation successful using ${providerName}.`);
+        console.log(`${logPrefix}LangChain generation successful using ${providerName}.`);
         return result.trim();
 
     } catch (error) {
-        console.error(`Error calling LangChain ${providerName}:`, error);
+        console.error(`${logPrefix}Error calling LangChain ${providerName}:`, error);
         if (error instanceof Error) {
             if (error.message.includes("Incorrect API key") || error.message.includes("API key invalid")) {
-                 throw new Error(`AI API call failed: Incorrect API Key provided for ${providerName}.`);
+                 throw new Error(`${logPrefix}AI API call failed: Incorrect API Key provided for ${providerName}.`);
             } else if (error.message.includes("quota")) {
-                 throw new Error(`AI API call failed: API Quota exceeded for ${providerName}.`);
+                 throw new Error(`${logPrefix}AI API call failed: API Quota exceeded for ${providerName}.`);
             }
-            throw new Error(`AI API call failed via LangChain (${providerName}): ${error.message}`);
+            throw new Error(`${logPrefix}AI API call failed via LangChain (${providerName}): ${error.message}`);
         }
-        throw new Error(`An unknown error occurred while calling the ${providerName} AI API via LangChain.`);
+        throw new Error(`${logPrefix}An unknown error occurred while calling the ${providerName} AI API via LangChain.`);
     }
 }
 
