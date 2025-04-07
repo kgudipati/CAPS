@@ -208,9 +208,6 @@ export default function HomePage() {
                           required
                           placeholder="E.g., A web application for tracking daily water intake..."
                           rows={5}
-                          wrapperClassName="mb-0"
-                          labelClassName="text-text-secondary"
-                          className="bg-card border-border placeholder-text-secondary text-text-primary focus:ring-accent focus:border-accent rounded-md"
                       />
                       <fieldset>
                           <legend className="block text-sm font-medium text-text-secondary mb-3">Select AI Provider</legend>
@@ -246,10 +243,7 @@ export default function HomePage() {
                           required
                           placeholder="E.g., Users often forget to drink enough water..."
                           rows={4}
-                          wrapperClassName="mb-0"
-                          labelClassName="text-text-secondary"
-                          className="bg-card border-border placeholder-text-secondary text-text-primary focus:ring-accent focus:border-accent rounded-md"
-                       />
+                      />
                       <TextAreaInput
                           label="Who are the target users?"
                           id="targetUsers"
@@ -258,9 +252,6 @@ export default function HomePage() {
                           required
                           placeholder="E.g., Health-conscious individuals..."
                           rows={4}
-                          wrapperClassName="mb-0"
-                          labelClassName="text-text-secondary"
-                          className="bg-card border-border placeholder-text-secondary text-text-primary focus:ring-accent focus:border-accent rounded-md"
                       />
                   </div>
               );
@@ -275,17 +266,13 @@ export default function HomePage() {
                           required
                           placeholder="E.g., Log intake, set goals, view charts..."
                           rows={6}
-                          wrapperClassName="mb-0"
-                          labelClassName="text-text-secondary"
-                          className="bg-card border-border placeholder-text-secondary text-text-primary focus:ring-accent focus:border-accent rounded-md"
                       />
                   </div>
               );
-           case 3: // Use BadgeInput for Tech Stack
-  return (
+           case 3:
+              return (
                   <div className="space-y-8">
-                    <h3 className="text-lg font-medium text-text-secondary mb-1">Technology Stack (Optional)</h3>
-                    <p className="text-sm text-text-secondary mb-4">Select or type technologies you plan to use.</p>
+                    <p className="text-sm text-text-secondary -mt-4 mb-4">Select or type technologies you plan to use.</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
                        <BadgeInput
                             label="Frontend"
@@ -295,8 +282,6 @@ export default function HomePage() {
                             onAdd={(item) => handleAddTechItem('frontend', item)}
                             onRemove={(item) => handleRemoveTechItem('frontend', item)}
                             placeholder="e.g., React, Next.js"
-                            labelClassName="!mb-1.5"
-                            wrapperClassName="mb-0"
                        />
                        <BadgeInput
                             label="Backend"
@@ -306,8 +291,6 @@ export default function HomePage() {
                             onAdd={(item) => handleAddTechItem('backend', item)}
                             onRemove={(item) => handleRemoveTechItem('backend', item)}
                             placeholder="e.g., Node.js, Python"
-                            labelClassName="!mb-1.5"
-                            wrapperClassName="mb-0"
                        />
                        <BadgeInput
                             label="Database"
@@ -317,8 +300,6 @@ export default function HomePage() {
                             onAdd={(item) => handleAddTechItem('database', item)}
                             onRemove={(item) => handleRemoveTechItem('database', item)}
                             placeholder="e.g., PostgreSQL"
-                            labelClassName="!mb-1.5"
-                            wrapperClassName="mb-0"
                        />
                        <BadgeInput
                             label="Infrastructure/Hosting"
@@ -328,8 +309,6 @@ export default function HomePage() {
                             onAdd={(item) => handleAddTechItem('infrastructure', item)}
                             onRemove={(item) => handleRemoveTechItem('infrastructure', item)}
                             placeholder="e.g., Vercel, AWS"
-                            labelClassName="!mb-1.5"
-                            wrapperClassName="mb-0"
                        />
                        <BadgeInput
                             label="Other Tools/Libraries"
@@ -339,8 +318,6 @@ export default function HomePage() {
                             onAdd={(item) => handleAddTechItem('other', item)}
                             onRemove={(item) => handleRemoveTechItem('other', item)}
                             placeholder="e.g., Zustand, Stripe"
-                            labelClassName="!mb-1.5"
-                            wrapperClassName="mb-0"
                        />
                     </div>
         </div>
@@ -348,17 +325,12 @@ export default function HomePage() {
            case 4:
               return (
                   <div className="space-y-8">
-                    <h3 className="text-lg font-medium text-text-secondary mb-2">Generation Options</h3>
                     <div className="space-y-8">
                       <CheckboxGroup
                         legend="Generate Rules?"
                         options={generationOptions.rules}
                         selectedValues={store.generationOptions.rules ? [generationOptions.rules[0].id] : []}
                         onChange={(id, checked) => handleGenerationOptionChange('rules', id, checked)}
-                        fieldsetClassName="mb-0"
-                        legendClassName="text-text-secondary !mb-3"
-                        labelClassName="text-text-primary"
-                        checkboxClassName="bg-card border-border text-accent focus:ring-accent rounded"
                       />
                        <CheckboxGroup
                         legend="Generate Specs? (Select all that apply)"
@@ -368,20 +340,12 @@ export default function HomePage() {
                           .map(([key]) => specKeyToOptionIdMap[key as keyof GenerationOptions['specs']])
                           .filter(id => !!id)}
                         onChange={(id, checked) => handleGenerationOptionChange('specs', id, checked)}
-                        fieldsetClassName="mb-0"
-                        legendClassName="text-text-secondary !mb-3"
-                        labelClassName="text-text-primary"
-                        checkboxClassName="bg-card border-border text-accent focus:ring-accent rounded"
                       />
                        <CheckboxGroup
                         legend="Generate Checklist?"
                         options={generationOptions.checklist}
                         selectedValues={store.generationOptions.checklist ? [generationOptions.checklist[0].id] : []}
                         onChange={(id, checked) => handleGenerationOptionChange('checklist', id, checked)}
-                        fieldsetClassName="mb-0"
-                        legendClassName="text-text-secondary !mb-3"
-                        labelClassName="text-text-primary"
-                        checkboxClassName="bg-card border-border text-accent focus:ring-accent rounded"
                       />
                     </div>
     </div>
