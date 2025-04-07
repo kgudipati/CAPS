@@ -43,7 +43,7 @@ const config: Config = {
     },
   },
   plugins: [
-    require('@tailwindcss/forms'), // Ensure forms plugin is active
+    require('@tailwindcss/forms'), // Form styling plugin
   ],
 };
 export default config; 
