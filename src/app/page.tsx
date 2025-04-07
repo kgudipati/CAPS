@@ -208,9 +208,12 @@ export default function HomePage() {
                           required
                           placeholder="E.g., A web application for tracking daily water intake..."
                           rows={5}
+                          wrapperClassName="mb-0"
+                          labelClassName="text-neutral-300"
+                          className="bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-neutral-100 focus:ring-teal-500 focus:border-teal-500 rounded-md"
                       />
                       <fieldset>
-                          <legend className="block text-sm font-medium text-text-secondary mb-3">Select AI Provider</legend>
+                          <legend className="block text-sm font-medium text-neutral-300 mb-3">Select AI Provider</legend>
                           <div className="flex flex-wrap gap-x-8 gap-y-4">
                               {(['openai', 'google', 'anthropic'] as AIProvider[]).map((provider) => (
                                   <div key={provider} className="flex items-center">
@@ -221,9 +224,9 @@ export default function HomePage() {
                                           value={provider}
                                           checked={store.selectedAIProvider === provider}
                                           onChange={handleProviderChange}
-                                          className="focus:ring-accent h-4 w-4 text-accent bg-card border-border rounded-full"
+                                          className="focus:ring-teal-500 h-4 w-4 text-teal-400 bg-neutral-600 border-neutral-500 rounded-full"
                                       />
-                                      <label htmlFor={provider} className="ml-2 block text-sm font-medium text-text-primary capitalize">
+                                      <label htmlFor={provider} className="ml-2 block text-sm font-medium text-neutral-200 capitalize">
                                           {provider}
                                       </label>
                                   </div>
@@ -243,7 +246,10 @@ export default function HomePage() {
                           required
                           placeholder="E.g., Users often forget to drink enough water..."
                           rows={4}
-                      />
+                          wrapperClassName="mb-0"
+                          labelClassName="text-neutral-300"
+                          className="bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-neutral-100 focus:ring-teal-500 focus:border-teal-500 rounded-md"
+                       />
                       <TextAreaInput
                           label="Who are the target users?"
                           id="targetUsers"
@@ -252,6 +258,9 @@ export default function HomePage() {
                           required
                           placeholder="E.g., Health-conscious individuals..."
                           rows={4}
+                          wrapperClassName="mb-0"
+                          labelClassName="text-neutral-300"
+                          className="bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-neutral-100 focus:ring-teal-500 focus:border-teal-500 rounded-md"
                       />
                   </div>
               );
@@ -266,13 +275,17 @@ export default function HomePage() {
                           required
                           placeholder="E.g., Log intake, set goals, view charts..."
                           rows={6}
+                          wrapperClassName="mb-0"
+                          labelClassName="text-neutral-300"
+                          className="bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-neutral-100 focus:ring-teal-500 focus:border-teal-500 rounded-md"
                       />
                   </div>
               );
-           case 3:
-              return (
+           case 3: // Use BadgeInput for Tech Stack
+  return (
                   <div className="space-y-8">
-                    <p className="text-sm text-text-secondary -mt-4 mb-4">Select or type technologies you plan to use.</p>
+                    <h3 className="text-lg font-medium text-neutral-200 mb-1">Technology Stack (Optional)</h3>
+                    <p className="text-sm text-neutral-400 mb-4">Select or type technologies you plan to use.</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
                        <BadgeInput
                             label="Frontend"
@@ -282,6 +295,8 @@ export default function HomePage() {
                             onAdd={(item) => handleAddTechItem('frontend', item)}
                             onRemove={(item) => handleRemoveTechItem('frontend', item)}
                             placeholder="e.g., React, Next.js"
+                            labelClassName="!mb-1.5"
+                            wrapperClassName="mb-0"
                        />
                        <BadgeInput
                             label="Backend"
@@ -291,6 +306,8 @@ export default function HomePage() {
                             onAdd={(item) => handleAddTechItem('backend', item)}
                             onRemove={(item) => handleRemoveTechItem('backend', item)}
                             placeholder="e.g., Node.js, Python"
+                            labelClassName="!mb-1.5"
+                            wrapperClassName="mb-0"
                        />
                        <BadgeInput
                             label="Database"
@@ -300,6 +317,8 @@ export default function HomePage() {
                             onAdd={(item) => handleAddTechItem('database', item)}
                             onRemove={(item) => handleRemoveTechItem('database', item)}
                             placeholder="e.g., PostgreSQL"
+                            labelClassName="!mb-1.5"
+                            wrapperClassName="mb-0"
                        />
                        <BadgeInput
                             label="Infrastructure/Hosting"
@@ -309,6 +328,8 @@ export default function HomePage() {
                             onAdd={(item) => handleAddTechItem('infrastructure', item)}
                             onRemove={(item) => handleRemoveTechItem('infrastructure', item)}
                             placeholder="e.g., Vercel, AWS"
+                            labelClassName="!mb-1.5"
+                            wrapperClassName="mb-0"
                        />
                        <BadgeInput
                             label="Other Tools/Libraries"
@@ -318,6 +339,8 @@ export default function HomePage() {
                             onAdd={(item) => handleAddTechItem('other', item)}
                             onRemove={(item) => handleRemoveTechItem('other', item)}
                             placeholder="e.g., Zustand, Stripe"
+                            labelClassName="!mb-1.5"
+                            wrapperClassName="mb-0"
                        />
                     </div>
         </div>
@@ -325,12 +348,17 @@ export default function HomePage() {
            case 4:
               return (
                   <div className="space-y-8">
+                    <h3 className="text-lg font-medium text-neutral-200 mb-2">Generation Options</h3>
                     <div className="space-y-8">
                       <CheckboxGroup
                         legend="Generate Rules?"
                         options={generationOptions.rules}
                         selectedValues={store.generationOptions.rules ? [generationOptions.rules[0].id] : []}
                         onChange={(id, checked) => handleGenerationOptionChange('rules', id, checked)}
+                        fieldsetClassName="mb-0"
+                        legendClassName="text-neutral-300 !mb-3"
+                        labelClassName="text-neutral-200"
+                        checkboxClassName="bg-neutral-600 border-neutral-500 text-teal-400 focus:ring-teal-500 rounded"
                       />
                        <CheckboxGroup
                         legend="Generate Specs? (Select all that apply)"
@@ -340,12 +368,20 @@ export default function HomePage() {
                           .map(([key]) => specKeyToOptionIdMap[key as keyof GenerationOptions['specs']])
                           .filter(id => !!id)}
                         onChange={(id, checked) => handleGenerationOptionChange('specs', id, checked)}
+                        fieldsetClassName="mb-0"
+                        legendClassName="text-neutral-300 !mb-3"
+                        labelClassName="text-neutral-200"
+                        checkboxClassName="bg-neutral-600 border-neutral-500 text-teal-400 focus:ring-teal-500 rounded"
                       />
                        <CheckboxGroup
                         legend="Generate Checklist?"
                         options={generationOptions.checklist}
                         selectedValues={store.generationOptions.checklist ? [generationOptions.checklist[0].id] : []}
                         onChange={(id, checked) => handleGenerationOptionChange('checklist', id, checked)}
+                        fieldsetClassName="mb-0"
+                        legendClassName="text-neutral-300 !mb-3"
+                        labelClassName="text-neutral-200"
+                        checkboxClassName="bg-neutral-600 border-neutral-500 text-teal-400 focus:ring-teal-500 rounded"
                       />
                     </div>
     </div>
@@ -355,14 +391,14 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen p-6 sm:p-8 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-neutral-900 to-neutral-800 text-neutral-200 p-6 sm:p-8 font-sans flex flex-col">
       <header className="w-full mb-8 flex-shrink-0">
-        <h1 className="text-3xl font-bold text-text-primary">CAPS</h1>
+        <h1 className="text-3xl font-bold text-neutral-100">CAPS</h1>
       </header>
 
       <div className="flex-grow flex items-center justify-center w-full overflow-hidden">
         <div className="flex items-start justify-center w-full max-w-5xl h-full">
-          <main className="flex flex-col flex-1 max-w-4xl p-12 bg-card rounded-xl shadow-lg relative overflow-hidden">
+          <main className="flex flex-col flex-1 max-w-4xl p-12 bg-neutral-800/60 backdrop-blur-sm rounded-xl shadow-2xl relative ring-1 ring-white/10 overflow-hidden">
 
             {store.error && (
               <div className="absolute top-0 left-0 right-0 bg-red-500/30 border-b border-red-500/50 text-red-100 px-4 py-2 text-sm z-20 flex items-center justify-center" role="alert">
@@ -371,9 +407,9 @@ export default function HomePage() {
             )}
 
             <div className={`flex-grow overflow-y-auto ${store.error ? 'mt-10' : ''}`}>
-                <div className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm pt-0 pb-6 mb-6">
-                  <h2 className="text-xl font-semibold text-text-primary">{stepInfo[store.currentStep]?.title || 'Step'}</h2>
-                  <p className="text-sm text-text-secondary mt-1">{stepInfo[store.currentStep]?.subtitle || 'Please provide the details below.'}</p>
+                <div className="sticky top-0 z-10 bg-neutral-800/90 backdrop-blur-sm pt-0 pb-6 mb-6">
+                  <h2 className="text-xl font-semibold text-neutral-100">{stepInfo[store.currentStep]?.title || 'Step'}</h2>
+                  <p className="text-sm text-neutral-400 mt-1">{stepInfo[store.currentStep]?.subtitle || 'Please provide the details below.'}</p>
                 </div>
                 <div className="relative min-h-[350px]">
                   <AnimatePresence initial={false} custom={direction}>
@@ -393,11 +429,11 @@ export default function HomePage() {
                 </div>
             </div>
 
-            <div className="flex-shrink-0 mt-8 pt-6 border-t border-border flex justify-between items-center z-10">
+            <div className="flex-shrink-0 mt-8 pt-6 border-t border-neutral-700/50 flex justify-between items-center z-10">
               {store.currentStep > 0 ? (
                 <button
                   onClick={() => paginate(-1)}
-                  className="text-accent hover:text-accent-hover font-medium transition duration-150 ease-in-out disabled:opacity-50 disabled:text-accent/50"
+                  className="text-teal-400 hover:text-teal-300 font-medium transition duration-150 ease-in-out disabled:opacity-50"
                   disabled={store.isLoading}
                 >
                   Previous
@@ -406,7 +442,7 @@ export default function HomePage() {
 
               <button
                 onClick={(e) => store.currentStep === TOTAL_STEPS - 1 ? handleSubmit(e as any) : paginate(1)}
-                className={`bg-accent text-background px-6 py-2.5 rounded-lg font-semibold hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-card disabled:opacity-60 disabled:bg-accent/50 disabled:cursor-not-allowed transition duration-150 ease-in-out shadow-md ${store.isLoading ? 'animate-pulse' : ''}`}
+                className={`bg-teal-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-neutral-800 disabled:opacity-60 disabled:bg-teal-800/50 disabled:cursor-not-allowed transition duration-150 ease-in-out shadow-md ${store.isLoading ? 'animate-pulse' : ''}`}
                 disabled={store.isLoading}
               >
                 {store.isLoading
@@ -421,7 +457,7 @@ export default function HomePage() {
             {[...Array(TOTAL_STEPS)].map((_, i) => (
               <div
                 key={i}
-                className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${store.currentStep === i ? 'bg-accent' : 'bg-border hover:bg-border/70'}`}
+                className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${store.currentStep === i ? 'bg-teal-400' : 'bg-neutral-600 hover:bg-neutral-500'}`}
                 title={`Step ${i + 1}`}
               />
             ))}

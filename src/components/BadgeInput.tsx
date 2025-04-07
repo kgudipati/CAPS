@@ -70,31 +70,30 @@ const BadgeInput: React.FC<BadgeInputProps> = ({
   };
 
   const defaultWrapperClasses = "mb-4";
-  const defaultLabelClasses = "block text-sm font-medium text-text-secondary mb-1.5"; // Adjusted margin
+  const defaultLabelClasses = "block text-sm font-medium text-neutral-300 mb-1.5"; // slate -> neutral
 
-  // New wrapper acting as the input field area - Use theme colors
+  // New wrapper acting as the input field area
   const inputAreaWrapperClasses = `
     relative mt-1 flex flex-wrap items-center gap-2 p-2 min-h-[42px]
-    w-full rounded-md border border-border bg-card {/* Use card background */}
-    focus-within:border-accent focus-within:ring-1 focus-within:ring-accent
-  `;
+    w-full rounded-md border border-neutral-600 bg-neutral-700
+    focus-within:border-teal-500 focus-within:ring-1 focus-within:ring-teal-500
+  `; // slate -> neutral, indigo -> teal
 
-  // Input field itself (borderless, growing) - Use theme colors
+  // Input field itself (borderless, growing)
   const inputClasses = `
-    flex-grow p-0 border-none bg-transparent text-text-primary placeholder-text-secondary
+    flex-grow p-0 border-none bg-transparent text-neutral-100 placeholder-neutral-400
     focus:ring-0 focus:outline-none sm:text-sm
-  `;
+  `; // slate -> neutral
 
-  // Badge styling - Use theme accent colors
-  // Adjusting badge appearance for better contrast/minimalism
-  const badgeClasses = "inline-flex items-center rounded-full bg-accent/10 px-2.5 py-0.5 text-sm font-medium text-accent ring-1 ring-inset ring-accent/30";
-  const badgeRemoveButtonClasses = "ml-1.5 inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-accent/70 hover:bg-accent/20 hover:text-accent focus:bg-accent/30 focus:text-accent focus:outline-none";
+  // Badge styling
+  const badgeClasses = "inline-flex items-center rounded-full bg-teal-100/10 px-2 py-0.5 text-sm font-medium text-teal-300 ring-1 ring-inset ring-teal-500/20"; // indigo -> teal
+  const badgeRemoveButtonClasses = "ml-1.5 inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-teal-400 hover:bg-teal-200/20 hover:text-teal-300 focus:bg-teal-500 focus:text-white focus:outline-none"; // indigo -> teal
 
-  // Dropdown styling - Use theme colors
-  const optionsWrapperClasses = "absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-card border border-border py-1 text-base shadow-lg focus:outline-none sm:text-sm"; // Use card bg and border
+  // Dropdown styling
+  const optionsWrapperClasses = "absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-neutral-800 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"; // slate -> neutral
   const optionClasses = ({ active }: { active: boolean }) =>
-    `relative cursor-pointer select-none py-2 px-4 ${active ? 'bg-accent/80 text-background' : 'text-text-primary'}`;
-  const customOptionClass = "italic text-accent hover:text-accent-hover"; // Style for the 'Add custom' option, adjust hover
+    `relative cursor-pointer select-none py-2 px-4 ${active ? 'bg-teal-600 text-white' : 'text-neutral-200'}`; // indigo -> teal, slate -> neutral
+  const customOptionClass = "italic text-teal-300"; // Style for the 'Add custom' option (indigo -> teal)
 
   return (
     <div className={`${defaultWrapperClasses} ${wrapperClassName}`.trim()}>
@@ -120,11 +119,11 @@ const BadgeInput: React.FC<BadgeInputProps> = ({
 
           {/* Actual Input Field */}
           <Combobox.Input
-            ref={inputRef}
+            ref={inputRef} // Attach ref
             className={inputClasses}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={handleInputKeyDown}
-            placeholder={selectedItems.length === 0 ? placeholder : ''}
+            placeholder={selectedItems.length === 0 ? placeholder : ''} // Show placeholder only if empty
             displayValue={() => query}
           />
         </div>
@@ -135,14 +134,15 @@ const BadgeInput: React.FC<BadgeInputProps> = ({
           leave="transition ease-in duration-100"
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
+          // Do not clear query on leave, let selection/blur handle it
         >
           <Combobox.Options className={optionsWrapperClasses}>
             {optionsWithCustom.length === 0 && query === '' ? (
-                 <div className="relative cursor-default select-none py-2 px-4 text-text-secondary">
+                 <div className="relative cursor-default select-none py-2 px-4 text-gray-400">
                    Start typing to search...
                  </div>
             ) : optionsWithCustom.length === 0 && query !== '' ? (
-                 <div className="relative cursor-default select-none py-2 px-4 text-text-secondary">
+                 <div className="relative cursor-default select-none py-2 px-4 text-gray-400">
                    Nothing found.
                  </div>
             ) : (
@@ -150,16 +150,14 @@ const BadgeInput: React.FC<BadgeInputProps> = ({
                 <Combobox.Option
                   key={item}
                   className={({ active }) =>
-                      // Adjust custom option styling within the active state check
-                      `${optionClasses({ active })} ${item.startsWith('Add "') && !active ? customOptionClass : ''} ${item.startsWith('Add "') && active ? 'italic' : ''}`
+                      `${optionClasses({ active })} ${item.startsWith('Add "') ? customOptionClass : ''}`
                   }
                   value={item}
                 >
                   {({ selected, active }) => (
                     <>
                       <span className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>
-                         {/* Display text, remove Add "" prefix for rendering */}
-                         {item.startsWith('Add "') ? `Add "${item.slice(5, -1)}"` : item}
+                        {item.startsWith('Add "') ? item : item} {/* Display text */}
                       </span>
                     </>
                   )}

@@ -6,15 +6,15 @@ interface CheckboxOption {
 }
 
 interface CheckboxGroupProps {
-  legend?: string;
-  options: { id: string; label: string }[];
-  selectedValues: string[];
-  onChange: (id: string, checked: boolean) => void;
-  fieldsetClassName?: string;
-  legendClassName?: string;
-  checkboxWrapperClassName?: string;
-  checkboxClassName?: string;
-  labelClassName?: string;
+  legend: string;
+  options: CheckboxOption[];
+  selectedValues: string[]; // Use string array for simple cases
+  onChange: (optionId: string, isChecked: boolean) => void;
+  fieldsetClassName?: string; // Class for the fieldset element
+  legendClassName?: string;   // Class for the legend element
+  labelClassName?: string;    // Class for the individual label elements
+  checkboxClassName?: string; // Class for the individual input (checkbox) elements
+  itemWrapperClassName?: string; // Class for the div wrapping each checkbox+label
 }
 
 const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
@@ -24,30 +24,31 @@ const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
   onChange,
   fieldsetClassName = '',
   legendClassName = '',
-  checkboxWrapperClassName = '',
-  checkboxClassName = '',
   labelClassName = '',
+  checkboxClassName = '',
+  itemWrapperClassName = ''
 }) => {
-  const defaultFieldsetClasses = "border-none p-0 m-0"; // Basic reset
-  const defaultLegendClasses = "block text-sm font-medium text-text-secondary mb-3"; // Theme color
-  const defaultCheckboxWrapperClasses = "flex items-center";
-  // Theme colors, remove ring
-  const defaultCheckboxClasses = "h-4 w-4 rounded border-border bg-card text-accent focus:ring-accent focus:ring-offset-card";
-  const defaultLabelClasses = "ml-2 block text-sm text-text-primary"; // Theme color
+  // Combine default styles with passed-in classes
+  const defaultFieldsetClasses = "mb-4";
+  const defaultLegendClasses = "block text-sm font-medium text-neutral-300 mb-3";
+  const defaultItemWrapperClasses = "flex items-center";
+  const defaultCheckboxClasses =
+    "h-4 w-4 rounded border-neutral-500 bg-neutral-600 text-teal-400 focus:ring-teal-500";
+  const defaultLabelClasses = "ml-2 block text-sm font-medium text-neutral-200";
 
   return (
     <fieldset className={`${defaultFieldsetClasses} ${fieldsetClassName}`.trim()}>
-      {legend && <legend className={`${defaultLegendClasses} ${legendClassName}`.trim()}>{legend}</legend>}
-      <div className="space-y-3"> {/* Adjust spacing as needed */}
+      <legend className={`${defaultLegendClasses} ${legendClassName}`.trim()}>{legend}</legend>
+      <div className="space-y-3">
         {options.map((option) => (
-          <div key={option.id} className={`${defaultCheckboxWrapperClasses} ${checkboxWrapperClassName}`.trim()}>
+          <div key={option.id} className={`${defaultItemWrapperClasses} ${itemWrapperClassName}`.trim()}>
             <input
               id={option.id}
               name={option.id}
               type="checkbox"
+              className={`${defaultCheckboxClasses} ${checkboxClassName}`.trim()}
               checked={selectedValues.includes(option.id)}
               onChange={(e) => onChange(option.id, e.target.checked)}
-              className={`${defaultCheckboxClasses} ${checkboxClassName}`.trim()}
             />
             <label htmlFor={option.id} className={`${defaultLabelClasses} ${labelClassName}`.trim()}>
               {option.label}

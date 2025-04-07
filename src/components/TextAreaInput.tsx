@@ -3,38 +3,37 @@ import React from 'react';
 interface TextAreaInputProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label: string;
   id: string;
-  wrapperClassName?: string;
   labelClassName?: string;
+  wrapperClassName?: string;
 }
 
 const TextAreaInput: React.FC<TextAreaInputProps> = ({
   label,
   id,
-  wrapperClassName = '',
   labelClassName = '',
+  wrapperClassName = '',
   className = '',
   ...props
 }) => {
   const defaultWrapperClasses = "mb-4";
-  const defaultLabelClasses = "block text-sm font-medium text-text-secondary mb-1.5";
-  const defaultInputClasses = `
-    block w-full rounded-md shadow-sm sm:text-sm
-    bg-card border-border placeholder-text-secondary text-text-primary
-    focus:border-accent focus:ring-accent
-  `;
+  const defaultLabelClasses = "block text-sm font-medium text-neutral-300 mb-2";
+  const defaultInputClasses =
+    "block w-full rounded-md shadow-sm border-neutral-600 bg-neutral-700 placeholder-neutral-400 text-neutral-100 focus:border-teal-500 focus:ring-teal-500 sm:text-sm";
 
   return (
     <div className={`${defaultWrapperClasses} ${wrapperClassName}`.trim()}>
       <label htmlFor={id} className={`${defaultLabelClasses} ${labelClassName}`.trim()}>
         {label}
-        {props.required && <span className="text-red-400 ml-1">*</span>}
       </label>
-      <textarea
-        id={id}
-        name={id}
-        className={`${defaultInputClasses} ${className}`.trim()}
-        {...props}
-      />
+      <div className="mt-1">
+        <textarea
+          id={id}
+          name={id}
+          rows={4}
+          className={`${defaultInputClasses} ${className}`.trim()}
+          {...props}
+        />
+      </div>
     </div>
   );
 };
