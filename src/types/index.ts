@@ -41,11 +41,11 @@ export interface FileData {
 // --- Zod Schemas for API Validation --- 
 
 export const techStackSchema = z.object({
-  frontend: z.string().optional(), // Make optional as user might leave blank
-  backend: z.string().optional(),
-  database: z.string().optional(),
-  infrastructure: z.string().optional(),
-  other: z.string().optional(),
+  frontend: z.array(z.string()).optional(), // Changed to array of strings
+  backend: z.array(z.string()).optional(), // Changed to array of strings
+  database: z.array(z.string()).optional(), // Changed to array of strings
+  infrastructure: z.array(z.string()).optional(), // Changed to array of strings
+  other: z.array(z.string()).optional(), // Changed to array of strings
 });
 
 export const generationOptionsSchema = z.object({
