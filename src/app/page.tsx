@@ -7,7 +7,7 @@ import TextAreaInput from '@/components/TextAreaInput';
 import CheckboxGroup from '@/components/CheckboxGroup';
 import BadgeInput from '@/components/BadgeInput'; // Import BadgeInput
 import { useProjectInputStore, AIProvider } from '@/lib/store';
-import { ProjectInputState, TechStack, GenerationOptions, ProjectInputData } from '@/types'; // Add GenerationOptions and ProjectInputData
+import { TechStack, GenerationOptions, ProjectInputData } from '@/types'; // Removed ProjectInputState
 import { TECH_CHOICES } from '@/lib/constants'; // Import tech choices
 
 // Define generation options (tech stack options removed)
@@ -101,8 +101,8 @@ export default function HomePage() {
     store.setSelectedAIProvider(event.target.value as AIProvider);
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const handleSubmit = async (event?: React.FormEvent) => {
+    event?.preventDefault();
     if (store.currentStep !== TOTAL_STEPS - 1) return; // Only submit on last step
 
     store.setLoading(true);
@@ -133,7 +133,7 @@ export default function HomePage() {
         let errorData;
         try {
           errorData = await response.json();
-        } catch (parseError) { /* Ignore */ }
+        } catch { /* Ignore parseError variable is unused */ }
         throw new Error(errorData?.error || `HTTP error! status: ${response.status} ${response.statusText}`);
       }
 
@@ -370,19 +370,25 @@ export default function HomePage() {
                         labelClassName="text-neutral-200"
                         checkboxClassName="bg-neutral-600 border-neutral-500 text-teal-400 focus:ring-teal-500 rounded"
                       />
-                       {/* Direct Checkbox for Single Checklist Option */}
-                       <div className="flex items-center mt-1"> {/* Add margin if needed */}
-                         <input
-                           id="gen-checklist"
-                           name="gen-checklist"
-                           type="checkbox"
-                           checked={!!store.generationOptions.checklist} // Use boolean value
-                           onChange={(e) => handleGenerationOptionChange('checklist', 'gen-checklist', e.target.checked)}
-                           className="h-4 w-4 rounded border-neutral-500 bg-neutral-600 text-teal-400 focus:ring-teal-500" // Use consistent checkbox classes
-                         />
-                         <label htmlFor="gen-checklist" className="ml-2 block text-sm font-medium text-neutral-200"> {/* Use consistent label classes */}
-                           Generate Task Checklist
-                         </label>
+                       {/* Wrap Checklist option for subheading */}
+                       <div className="space-y-3"> {/* Added spacing */}
+                         <legend className="block text-sm font-medium text-neutral-300"> {/* Mimic CheckboxGroup legend style */}
+                           Generate Task Checklist?
+                         </legend>
+                         {/* Direct Checkbox for Single Checklist Option */}
+                         <div className="flex items-center"> {/* Removed mt-1 as spacing handled by parent */}
+                           <input
+                             id="gen-checklist"
+                             name="gen-checklist"
+                             type="checkbox"
+                             checked={!!store.generationOptions.checklist} // Use boolean value
+                             onChange={(e) => handleGenerationOptionChange('checklist', 'gen-checklist', e.target.checked)}
+                             className="h-4 w-4 rounded border-neutral-500 bg-neutral-600 text-teal-400 focus:ring-teal-500" // Use consistent checkbox classes
+                           />
+                           <label htmlFor="gen-checklist" className="ml-2 block text-sm font-medium text-neutral-200"> {/* Use consistent label classes */}
+                             Generate Task Checklist
+                           </label>
+                         </div>
                        </div>
                     </div>
                   </div>
@@ -392,15 +398,14 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-900 to-neutral-800 text-neutral-200 p-6 sm:p-8 font-sans flex flex-col">
-      <header className="w-full mb-8 flex-shrink-0 flex items-center"> {/* Use flex to align logo */}
-        {/* Replace h1 with Image */}
+    <div className="min-h-screen bg-gradient-to-br from-neutral-900 to-neutral-800 text-neutral-200 p-2 sm:pt-4 sm:px-8 font-sans flex flex-col">
+      <header className="w-full mb-2 flex-shrink-0 flex items-center">
         <Image 
           src="/logo.png" 
           alt="CAPS Logo"
-          width={120} // Adjust as needed
-          height={40} // Adjust as needed (e.g., matching h-10)
-          priority // Load logo quickly
+          width={200} // Increased width
+          height={80} // Increased height (maintaining 3:1 ratio)
+          priority 
         />
       </header>
 
@@ -449,7 +454,7 @@ export default function HomePage() {
               ) : <div /> /* Placeholder */}
 
               <button
-                onClick={(e) => store.currentStep === TOTAL_STEPS - 1 ? handleSubmit(e as any) : paginate(1)}
+                onClick={() => store.currentStep === TOTAL_STEPS - 1 ? handleSubmit() : paginate(1)}
                 className={`bg-teal-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-neutral-800 disabled:opacity-60 disabled:bg-teal-800/50 disabled:cursor-not-allowed transition duration-150 ease-in-out shadow-md ${store.isLoading ? 'animate-pulse' : ''}`}
                 disabled={store.isLoading}
               >
