@@ -579,32 +579,44 @@ export function getSpecInput(specType: keyof ProjectInputData['generationOptions
     };
 }
 
-// --- Checklist Prompt --- 
+// --- Checklist Prompt ---
 
 export const checklistTemplate = `
-Generate a detailed **Test-Driven Development (TDD)** implementation checklist (in Markdown format with check
-boxes) for the software project described below.
-The checklist must guide an AI assistant or developer through coding and implementation tasks ONLY.
-Exclude documentation, user studies, CI/CD setup, deployment, or other non-coding activities.
+Generate a **highly detailed and comprehensive Test-Driven Development (TDD)** implementation checklist in Markdown format with checkboxes ([ ]).
+This checklist is intended to guide an AI assistant or developer meticulously through the **coding and implementation phase ONLY**.
+**Strictly exclude** any tasks related to documentation generation, user studies/feedback, CI/CD pipeline setup, deployment processes, infrastructure provisioning, project management overhead, or any other non-coding activities. The focus is 100% on writing the code.
 
-**Instructions for Checklist Generation:**
-1.  **Categorize:** Group tasks into logical categories (e.g., Backend Setup, API Development, Frontend Comp
-onents, Feature Implementation - [Feature Name]).
-2.  **TDD Focus:** For each functional piece of code (e.g., API endpoint logic, utility function, complex UI 
-component logic):
-    - First, add a task to write a failing test(s) (Unit or Integration as appropriate). Example: \`- [ ] TES
-T: Write failing unit test for user creation validation logic.\`
-    - Second, add a task to write the minimum code required to make the test(s) pass. Example: \`- [ ] IMPL:
- Implement user creation validation logic to pass the test.\`
-    - Third, optionally add a task for refactoring if needed. Example: \`- [ ] REFACTOR: Refactor user creat
-ion logic for clarity and efficiency.\`
-3.  **Logical Order:** Ensure tasks within and between categories follow a logical implementation sequence (e.
-g., set up backend models before creating API endpoints that use them).
-4.  **Descriptive Tasks:** Clearly describe each task, specifying the component, feature, or logic involved.
- Avoid vague tasks.
-5.  **Implementation Only:** Focus solely on tasks directly related to writing code (setup, tests, implement
-ation, refactoring). Do NOT include tasks like \"Write documentation\", \"Conduct user research\", \"Set up G
-itHub Actions\", \"Deploy to Vercel\".
+**Core Principles for Checklist Generation:**
+1.  **Decomposition:** Analyze the project description, features, target users, and tech stack. Break down the overall goal into the smallest logical, implementable code units. Think in terms of database models, service layer logic, API endpoints (including request validation, response formatting), utility functions, frontend components (atomic and composite), state management slices/stores, frontend routing, and frontend-backend integration points.
+2.  **Granular Categories:** Use a hierarchical structure with clear, specific categories and sub-categories. Examples:
+    - ### Backend
+      - #### Setup & Configuration
+      - #### Database Schema (e.g., Prisma Models)
+      - #### Core Services (e.g., User Service, Auth Service, [Feature] Service)
+      - #### API Routes (e.g., /api/auth, /api/users, /api/[feature])
+      - #### Utilities
+    - ### Frontend
+      - #### Setup & Configuration
+      - #### Routing Setup
+      - #### Global State Management (e.g., Zustand Store)
+      - #### UI Component Library / Design System Setup
+      - #### Core UI Components (e.g., Button, Input, Modal)
+      - #### Feature Components (e.g., AuthForm, UserProfile, [Feature]List)
+      - #### API Integration Services/Hooks
+3.  **Rigorous TDD:** For **every** piece of functional code (backend service logic, API endpoint handlers, complex utility functions, frontend component logic involving state or interactions, state management actions/reducers):
+    - **TEST:** Add a task to write specific, failing test(s) first (Unit, Integration, or Component test as appropriate). Name the test clearly. Example: \`- [ ] TEST: User Service - Write failing unit test for \`createUser\` function (duplicate email case).\`
+    - **IMPL:** Add a task to write the *minimum* amount of code required to make the test(s) pass. Example: \`- [ ] IMPL: User Service - Implement duplicate email check in \`createUser\` function.\`
+    - **REFACTOR:** *Optionally*, add a task to refactor the code and tests for clarity, efficiency, or adherence to best practices *after* the tests pass. Example: \`- [ ] REFACTOR: User Service - Refactor \`createUser\` error handling.\`
+4.  **Logical Sequencing:** Order all tasks based on dependencies. Examples:
+    - Define database models before writing services that use them.
+    - Implement core service logic before creating API routes that call it.
+    - Set up global state before components rely on it.
+    - Create basic API endpoints before frontend components try to fetch data from them.
+    - Implement basic components before composing them into larger feature components.
+5.  **Explicit & Descriptive Tasks:** Each task must be unambiguous and clearly state *what* needs to be done and *which* specific part of the codebase it relates to. Infer necessary sub-tasks (e.g., input validation for APIs, error handling in services, loading states in UI components).
+    - *Bad Example:* \`- [ ] Implement user login.\`
+    - *Good Example:* \`- [ ] TEST: Auth Service - Write failing unit test for \`loginUser\` (incorrect password case).\`, \`- [ ] IMPL: Auth Service - Implement password verification logic in \`loginUser\`.\`, \`- [ ] TEST: Auth API - Write failing integration test for POST /api/auth/login (invalid credentials).\`, \`- [ ] IMPL: Auth API - Implement POST /api/auth/login route calling Auth Service.\`, etc.
+6.  **Focus:** 100% on CODE IMPLEMENTATION. If it's not writing code or tests, it doesn't belong here.
 
 **Project Details:**
 Project Description:
@@ -622,22 +634,11 @@ Key Features:
 Tech Stack:
 {techStackInfo}
 
-Generate the TDD checklist based on the above instructions and project details.
-Example Task Structure:
+--- BEGIN CHECKLIST ---
 
-### Category: Backend Setup
-- [ ] SETUP: Initialize Prisma schema with initial User model.
-- [ ] SETUP: Configure testing environment and database fixtures.
+Generate the comprehensive TDD implementation checklist based *strictly* on the above principles and project details. Start immediately with the first category heading.
 
-### Category: API Development - User Authentication
-- [ ] TEST: Write failing integration test for POST /api/auth/register endpoint (invalid input case).
-- [ ] IMPL: Implement basic POST /api/auth/register endpoint structure and input validation to pass test.
-- [ ] TEST: Write failing integration test for POST /api/auth/register endpoint (successful registration).
-- [ ] IMPL: Implement user creation logic (hashing password, saving to DB) to pass test.
-- [ ] REFACTOR: Refactor registration logic if necessary.
-
-Output ONLY the Markdown checklist, starting immediately with the first category heading (e.g., ### Category
-: ...).
+--- END CHECKLIST ---
 `;
 
 // Function to get input for checklist (same as project rules)
