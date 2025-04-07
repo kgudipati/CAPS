@@ -1,0 +1,9 @@
+@import "tailwindcss/preflight"; /* Tailwind v4 base styles */
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-text-primary antialiased font-sans; /* Ensure font-sans here too */
+  }
+  /* Add other base styles if needed */
+} 

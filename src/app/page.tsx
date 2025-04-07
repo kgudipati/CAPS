@@ -37,6 +37,15 @@ const specKeyToOptionIdMap: { [key in keyof GenerationOptions['specs']]: string 
 
 const TOTAL_STEPS = 5; // Corresponds to currentStep 0-4
 
+// Step Titles and Subtitles
+const stepInfo = [
+  { title: "Project Overview", subtitle: "Tell us about your core idea and choose your AI partner." },
+  { title: "Problem & Users", subtitle: "Define the core problem and who you're solving it for." },
+  { title: "Key Features", subtitle: "List the main features your project will offer." },
+  { title: "Technology Stack", subtitle: "Specify the technologies you plan to use (optional)." },
+  { title: "Generation Options", subtitle: "Select the documents and artifacts you want to generate." },
+];
+
 export default function HomePage() {
   const store = useProjectInputStore();
 
@@ -200,11 +209,11 @@ export default function HomePage() {
                           placeholder="E.g., A web application for tracking daily water intake..."
                           rows={5}
                           wrapperClassName="mb-0"
-                          labelClassName="text-slate-300"
-                          className="bg-slate-700 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 rounded-md"
+                          labelClassName="text-text-secondary"
+                          className="bg-card border-border placeholder-text-secondary text-text-primary focus:ring-accent focus:border-accent rounded-md"
                       />
                       <fieldset>
-                          <legend className="block text-sm font-medium text-slate-300 mb-3">Select AI Provider</legend>
+                          <legend className="block text-sm font-medium text-text-secondary mb-3">Select AI Provider</legend>
                           <div className="flex flex-wrap gap-x-8 gap-y-4">
                               {(['openai', 'google', 'anthropic'] as AIProvider[]).map((provider) => (
                                   <div key={provider} className="flex items-center">
@@ -215,9 +224,9 @@ export default function HomePage() {
                                           value={provider}
                                           checked={store.selectedAIProvider === provider}
                                           onChange={handleProviderChange}
-                                          className="focus:ring-indigo-500 h-4 w-4 text-indigo-400 bg-slate-600 border-slate-500 rounded-full"
+                                          className="focus:ring-accent h-4 w-4 text-accent bg-card border-border rounded-full"
                                       />
-                                      <label htmlFor={provider} className="ml-2 block text-sm font-medium text-slate-200 capitalize">
+                                      <label htmlFor={provider} className="ml-2 block text-sm font-medium text-text-primary capitalize">
                                           {provider}
                                       </label>
                                   </div>
@@ -238,8 +247,8 @@ export default function HomePage() {
                           placeholder="E.g., Users often forget to drink enough water..."
                           rows={4}
                           wrapperClassName="mb-0"
-                          labelClassName="text-slate-300"
-                          className="bg-slate-700 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 rounded-md"
+                          labelClassName="text-text-secondary"
+                          className="bg-card border-border placeholder-text-secondary text-text-primary focus:ring-accent focus:border-accent rounded-md"
                        />
                       <TextAreaInput
                           label="Who are the target users?"
@@ -250,8 +259,8 @@ export default function HomePage() {
                           placeholder="E.g., Health-conscious individuals..."
                           rows={4}
                           wrapperClassName="mb-0"
-                          labelClassName="text-slate-300"
-                          className="bg-slate-700 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 rounded-md"
+                          labelClassName="text-text-secondary"
+                          className="bg-card border-border placeholder-text-secondary text-text-primary focus:ring-accent focus:border-accent rounded-md"
                       />
                   </div>
               );
@@ -267,16 +276,16 @@ export default function HomePage() {
                           placeholder="E.g., Log intake, set goals, view charts..."
                           rows={6}
                           wrapperClassName="mb-0"
-                          labelClassName="text-slate-300"
-                          className="bg-slate-700 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 rounded-md"
+                          labelClassName="text-text-secondary"
+                          className="bg-card border-border placeholder-text-secondary text-text-primary focus:ring-accent focus:border-accent rounded-md"
                       />
                   </div>
               );
            case 3: // Use BadgeInput for Tech Stack
-              return (
+  return (
                   <div className="space-y-8">
-                    <h3 className="text-lg font-medium text-slate-200 mb-1">Technology Stack (Optional)</h3>
-                    <p className="text-sm text-slate-400 mb-4">Select or type technologies you plan to use.</p>
+                    <h3 className="text-lg font-medium text-text-secondary mb-1">Technology Stack (Optional)</h3>
+                    <p className="text-sm text-text-secondary mb-4">Select or type technologies you plan to use.</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
                        <BadgeInput
                             label="Frontend"
@@ -334,12 +343,12 @@ export default function HomePage() {
                             wrapperClassName="mb-0"
                        />
                     </div>
-                  </div>
+        </div>
               );
            case 4:
               return (
                   <div className="space-y-8">
-                    <h3 className="text-lg font-medium text-slate-200 mb-2">Generation Options</h3>
+                    <h3 className="text-lg font-medium text-text-secondary mb-2">Generation Options</h3>
                     <div className="space-y-8">
                       <CheckboxGroup
                         legend="Generate Rules?"
@@ -347,9 +356,9 @@ export default function HomePage() {
                         selectedValues={store.generationOptions.rules ? [generationOptions.rules[0].id] : []}
                         onChange={(id, checked) => handleGenerationOptionChange('rules', id, checked)}
                         fieldsetClassName="mb-0"
-                        legendClassName="text-slate-300 !mb-3"
-                        labelClassName="text-slate-200"
-                        checkboxClassName="bg-slate-600 border-slate-500 text-indigo-400 focus:ring-indigo-500 rounded"
+                        legendClassName="text-text-secondary !mb-3"
+                        labelClassName="text-text-primary"
+                        checkboxClassName="bg-card border-border text-accent focus:ring-accent rounded"
                       />
                        <CheckboxGroup
                         legend="Generate Specs? (Select all that apply)"
@@ -360,9 +369,9 @@ export default function HomePage() {
                           .filter(id => !!id)}
                         onChange={(id, checked) => handleGenerationOptionChange('specs', id, checked)}
                         fieldsetClassName="mb-0"
-                        legendClassName="text-slate-300 !mb-3"
-                        labelClassName="text-slate-200"
-                        checkboxClassName="bg-slate-600 border-slate-500 text-indigo-400 focus:ring-indigo-500 rounded"
+                        legendClassName="text-text-secondary !mb-3"
+                        labelClassName="text-text-primary"
+                        checkboxClassName="bg-card border-border text-accent focus:ring-accent rounded"
                       />
                        <CheckboxGroup
                         legend="Generate Checklist?"
@@ -370,26 +379,26 @@ export default function HomePage() {
                         selectedValues={store.generationOptions.checklist ? [generationOptions.checklist[0].id] : []}
                         onChange={(id, checked) => handleGenerationOptionChange('checklist', id, checked)}
                         fieldsetClassName="mb-0"
-                        legendClassName="text-slate-300 !mb-3"
-                        labelClassName="text-slate-200"
-                        checkboxClassName="bg-slate-600 border-slate-500 text-indigo-400 focus:ring-indigo-500 rounded"
+                        legendClassName="text-text-secondary !mb-3"
+                        labelClassName="text-text-primary"
+                        checkboxClassName="bg-card border-border text-accent focus:ring-accent rounded"
                       />
                     </div>
-                  </div>
-              );
+    </div>
+  );
           default: return null;
       }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-slate-200 p-6 sm:p-8 font-sans flex flex-col">
+    <div className="min-h-screen p-6 sm:p-8 flex flex-col">
       <header className="w-full mb-8 flex-shrink-0">
-        <h1 className="text-3xl font-bold text-slate-100">CAPS</h1>
+        <h1 className="text-3xl font-bold text-text-primary">CAPS</h1>
       </header>
 
-      <div className="flex-grow flex items-center justify-center w-full">
-        <div className="flex items-start justify-center w-full max-w-5xl">
-          <main className="flex-1 max-w-4xl p-12 bg-slate-800/60 backdrop-blur-sm rounded-xl shadow-2xl relative ring-1 ring-white/10">
+      <div className="flex-grow flex items-center justify-center w-full overflow-hidden">
+        <div className="flex items-start justify-center w-full max-w-5xl h-full">
+          <main className="flex flex-col flex-1 max-w-4xl p-12 bg-card rounded-xl shadow-lg relative overflow-hidden">
 
             {store.error && (
               <div className="absolute top-0 left-0 right-0 bg-red-500/30 border-b border-red-500/50 text-red-100 px-4 py-2 text-sm z-20 flex items-center justify-center" role="alert">
@@ -397,29 +406,34 @@ export default function HomePage() {
               </div>
             )}
 
-            <div className={`relative ${store.error ? 'pt-6' : ''}`}>
-              <AnimatePresence initial={false} custom={direction}>
-                <motion.div
-                  key={store.currentStep}
-                  custom={direction}
-                  variants={variants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={transitionConfig}
-                  className="min-h-[350px]"
-                >
-                  {renderStepContent()}
-                </motion.div>
-              </AnimatePresence>
+            <div className={`flex-grow overflow-y-auto ${store.error ? 'mt-10' : ''}`}>
+                <div className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm pt-0 pb-6 mb-6">
+                  <h2 className="text-xl font-semibold text-text-primary">{stepInfo[store.currentStep]?.title || 'Step'}</h2>
+                  <p className="text-sm text-text-secondary mt-1">{stepInfo[store.currentStep]?.subtitle || 'Please provide the details below.'}</p>
+                </div>
+                <div className="relative min-h-[350px]">
+                  <AnimatePresence initial={false} custom={direction}>
+                    <motion.div
+                      key={store.currentStep}
+                      custom={direction}
+                      variants={variants}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      transition={transitionConfig}
+                      className="absolute inset-0"
+                    >
+                      {renderStepContent()}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
             </div>
 
-            {/* Navigation Buttons */}
-            <div className="mt-8 pt-6 border-t border-slate-700/50 flex justify-between items-center z-10">
+            <div className="flex-shrink-0 mt-8 pt-6 border-t border-border flex justify-between items-center z-10">
               {store.currentStep > 0 ? (
                 <button
                   onClick={() => paginate(-1)}
-                  className="text-indigo-400 hover:text-indigo-300 font-medium transition duration-150 ease-in-out disabled:opacity-50"
+                  className="text-accent hover:text-accent-hover font-medium transition duration-150 ease-in-out disabled:opacity-50 disabled:text-accent/50"
                   disabled={store.isLoading}
                 >
                   Previous
@@ -428,30 +442,29 @@ export default function HomePage() {
 
               <button
                 onClick={(e) => store.currentStep === TOTAL_STEPS - 1 ? handleSubmit(e as any) : paginate(1)}
-                className={`bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-60 disabled:bg-indigo-800/50 disabled:cursor-not-allowed transition duration-150 ease-in-out shadow-md ${store.isLoading ? 'animate-pulse' : ''}`}
+                className={`bg-accent text-background px-6 py-2.5 rounded-lg font-semibold hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-card disabled:opacity-60 disabled:bg-accent/50 disabled:cursor-not-allowed transition duration-150 ease-in-out shadow-md ${store.isLoading ? 'animate-pulse' : ''}`}
                 disabled={store.isLoading}
               >
                 {store.isLoading
                     ? (store.currentStep === TOTAL_STEPS - 1 ? 'Generating...' : 'Loading...')
                     : (store.currentStep === TOTAL_STEPS - 1 ? 'Create Project Setup' : 'Next')}
               </button>
-            </div> {/* End Navigation Buttons Div */}
+            </div>
 
-          </main> {/* Correctly close main */}
+          </main>
 
-          {/* Progress Indicator Column */}
           <div className="flex-shrink-0 flex flex-col justify-start space-y-4 ml-8 pt-12">
             {[...Array(TOTAL_STEPS)].map((_, i) => (
               <div
                 key={i}
-                className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${store.currentStep === i ? 'bg-indigo-400' : 'bg-slate-600 hover:bg-slate-500'}`}
+                className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${store.currentStep === i ? 'bg-accent' : 'bg-border hover:bg-border/70'}`}
                 title={`Step ${i + 1}`}
               />
             ))}
-          </div> {/* End Indicator Div */}
+          </div>
 
-        </div> {/* End Flex Row Div */}
-      </div> {/* End Centering Div */}
-    </div> // End Root Div
-  ); // End Return
+        </div>
+      </div>
+    </div>
+  );
 }

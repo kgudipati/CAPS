@@ -1,6 +1,6 @@
 import { XMarkIcon } from '@heroicons/react/24/solid'; // Correct path for v2
 import { Combobox, Transition } from '@headlessui/react';
-import React, { useState, Fragment } from 'react';
+import React, { useState, Fragment, useRef, useEffect } from 'react';
 
 interface BadgeInputProps {
   label: string;
@@ -26,89 +26,84 @@ const BadgeInput: React.FC<BadgeInputProps> = ({
   wrapperClassName = '',
 }) => {
   const [query, setQuery] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null); // Ref for the actual input
 
   const filteredChoices = query === ''
-    ? availableChoices.filter(choice => !selectedItems.includes(choice)) // Show all available if no query
+    ? availableChoices.filter(choice => !selectedItems.includes(choice))
     : availableChoices.filter(choice =>
         !selectedItems.includes(choice) &&
         choice.toLowerCase().includes(query.toLowerCase())
       );
 
+  // Combine filtered choices with a potential custom add option
+  const optionsWithCustom = [
+      ...filteredChoices,
+      ...(query && !availableChoices.includes(query) && !selectedItems.includes(query) ? [`Add "${query}"`] : [])
+  ];
+
   const handleSelect = (item: string | null) => {
-    if (item && !selectedItems.includes(item)) {
+    if (!item) return;
+
+    // Check if it's the custom add option
+    if (item.startsWith('Add "') && item.endsWith('"')) {
+        const customItem = item.slice(5, -1);
+        if (customItem && !selectedItems.includes(customItem)) {
+            onAdd(customItem);
+        }
+    } else if (!selectedItems.includes(item)) {
       onAdd(item);
     }
-    setQuery(''); // Reset query after selection
+    setQuery(''); // Reset query after selection or custom add
+    // Optionally focus input after adding/selecting
+    inputRef.current?.focus();
   };
 
   const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && query && !selectedItems.includes(query) && !availableChoices.includes(query)) {
-      // Allow adding custom item on Enter if it's not already selected or in the predefined list
-      event.preventDefault(); // Prevent form submission if needed
-      onAdd(query);
-      setQuery('');
+    // Handle Backspace: Remove last badge if query is empty
+    if (event.key === 'Backspace' && query === '' && selectedItems.length > 0) {
+        onRemove(selectedItems[selectedItems.length - 1]);
+        return; // Prevent default backspace behavior on the input itself
     }
+
+    // Removed Enter key logic - Combobox onChange handles selection now
+    // if (event.key === 'Enter' && ...) { ... }
   };
 
   const defaultWrapperClasses = "mb-4";
-  const defaultLabelClasses = "block text-sm font-medium text-slate-300 mb-2";
-  const inputWrapperClasses = "relative mt-1";
-  const inputClasses = "w-full rounded-md border border-slate-600 bg-slate-700 py-2 pl-3 pr-10 text-slate-100 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm";
-  const badgeWrapperClasses = "flex flex-wrap gap-2 mt-2";
-  const badgeClasses = "inline-flex items-center rounded-full bg-indigo-100/10 px-2.5 py-0.5 text-sm font-medium text-indigo-300 ring-1 ring-inset ring-indigo-500/20";
-  const badgeRemoveButtonClasses = "ml-1.5 inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-indigo-400 hover:bg-indigo-200/20 hover:text-indigo-300 focus:bg-indigo-500 focus:text-white focus:outline-none";
-  const optionsWrapperClasses = "absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-slate-700 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm";
+  const defaultLabelClasses = "block text-sm font-medium text-text-secondary mb-1.5"; // Adjusted margin
+
+  // New wrapper acting as the input field area - Use theme colors
+  const inputAreaWrapperClasses = `
+    relative mt-1 flex flex-wrap items-center gap-2 p-2 min-h-[42px]
+    w-full rounded-md border border-border bg-card {/* Use card background */}
+    focus-within:border-accent focus-within:ring-1 focus-within:ring-accent
+  `;
+
+  // Input field itself (borderless, growing) - Use theme colors
+  const inputClasses = `
+    flex-grow p-0 border-none bg-transparent text-text-primary placeholder-text-secondary
+    focus:ring-0 focus:outline-none sm:text-sm
+  `;
+
+  // Badge styling - Use theme accent colors
+  // Adjusting badge appearance for better contrast/minimalism
+  const badgeClasses = "inline-flex items-center rounded-full bg-accent/10 px-2.5 py-0.5 text-sm font-medium text-accent ring-1 ring-inset ring-accent/30";
+  const badgeRemoveButtonClasses = "ml-1.5 inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-accent/70 hover:bg-accent/20 hover:text-accent focus:bg-accent/30 focus:text-accent focus:outline-none";
+
+  // Dropdown styling - Use theme colors
+  const optionsWrapperClasses = "absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-card border border-border py-1 text-base shadow-lg focus:outline-none sm:text-sm"; // Use card bg and border
   const optionClasses = ({ active }: { active: boolean }) =>
-    `relative cursor-default select-none py-2 px-4 ${active ? 'bg-indigo-600 text-white' : 'text-slate-200'}`;
+    `relative cursor-pointer select-none py-2 px-4 ${active ? 'bg-accent/80 text-background' : 'text-text-primary'}`;
+  const customOptionClass = "italic text-accent hover:text-accent-hover"; // Style for the 'Add custom' option, adjust hover
 
   return (
     <div className={`${defaultWrapperClasses} ${wrapperClassName}`.trim()}>
-      <Combobox value={null} onChange={handleSelect}> {/* Use null initially, selection triggers onChange */}
+      <Combobox value={null} onChange={handleSelect}>
         <Combobox.Label className={`${defaultLabelClasses} ${labelClassName}`.trim()}>{label}</Combobox.Label>
-        <div className={inputWrapperClasses}>
-          <Combobox.Input
-            className={inputClasses}
-            onChange={(event) => setQuery(event.target.value)}
-            onKeyDown={handleInputKeyDown}
-            placeholder={placeholder}
-            displayValue={() => query} // Keep input value as the query
-          />
-          <Combobox.Button className="absolute inset-y-0 right-0 flex items-center rounded-r-md px-2 focus:outline-none">
-             {/* Optional: Add dropdown icon if needed */}
-             {/* <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" /> */}
-          </Combobox.Button>
 
-          <Transition
-            as={Fragment}
-            leave="transition ease-in duration-100"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-            afterLeave={() => setQuery('')}
-          >
-            <Combobox.Options className={optionsWrapperClasses}>
-              {filteredChoices.length === 0 && query !== '' ? (
-                <div className="relative cursor-default select-none py-2 px-4 text-gray-400">
-                  Nothing found.
-                </div>
-              ) : (
-                filteredChoices.map((choice) => (
-                  <Combobox.Option
-                    key={choice}
-                    className={optionClasses}
-                    value={choice}
-                  >
-                    {choice}
-                  </Combobox.Option>
-                ))
-              )}
-            </Combobox.Options>
-          </Transition>
-        </div>
-      </Combobox>
-
-      {/* Selected Items (Badges) */}
-      {selectedItems.length > 0 && (
-        <div className={badgeWrapperClasses}>
+        {/* Input Area Wrapper */}
+        <div className={inputAreaWrapperClasses}>
+          {/* Selected Items (Badges) */}
           {selectedItems.map((item) => (
             <span key={item} className={badgeClasses}>
               {item}
@@ -122,8 +117,58 @@ const BadgeInput: React.FC<BadgeInputProps> = ({
               </button>
             </span>
           ))}
+
+          {/* Actual Input Field */}
+          <Combobox.Input
+            ref={inputRef}
+            className={inputClasses}
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={handleInputKeyDown}
+            placeholder={selectedItems.length === 0 ? placeholder : ''}
+            displayValue={() => query}
+          />
         </div>
-      )}
+
+        {/* Dropdown Options */}
+        <Transition
+          as={Fragment}
+          leave="transition ease-in duration-100"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <Combobox.Options className={optionsWrapperClasses}>
+            {optionsWithCustom.length === 0 && query === '' ? (
+                 <div className="relative cursor-default select-none py-2 px-4 text-text-secondary">
+                   Start typing to search...
+                 </div>
+            ) : optionsWithCustom.length === 0 && query !== '' ? (
+                 <div className="relative cursor-default select-none py-2 px-4 text-text-secondary">
+                   Nothing found.
+                 </div>
+            ) : (
+              optionsWithCustom.map((item) => (
+                <Combobox.Option
+                  key={item}
+                  className={({ active }) =>
+                      // Adjust custom option styling within the active state check
+                      `${optionClasses({ active })} ${item.startsWith('Add "') && !active ? customOptionClass : ''} ${item.startsWith('Add "') && active ? 'italic' : ''}`
+                  }
+                  value={item}
+                >
+                  {({ selected, active }) => (
+                    <>
+                      <span className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>
+                         {/* Display text, remove Add "" prefix for rendering */}
+                         {item.startsWith('Add "') ? `Add "${item.slice(5, -1)}"` : item}
+                      </span>
+                    </>
+                  )}
+                </Combobox.Option>
+              ))
+            )}
+          </Combobox.Options>
+        </Transition>
+      </Combobox>
     </div>
   );
 };

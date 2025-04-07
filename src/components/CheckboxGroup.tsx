@@ -6,15 +6,15 @@ interface CheckboxOption {
 }
 
 interface CheckboxGroupProps {
-  legend: string;
-  options: CheckboxOption[];
-  selectedValues: string[]; // Use string array for simple cases
-  onChange: (optionId: string, isChecked: boolean) => void;
-  fieldsetClassName?: string; // Class for the fieldset element
-  legendClassName?: string;   // Class for the legend element
-  labelClassName?: string;    // Class for the individual label elements
-  checkboxClassName?: string; // Class for the individual input (checkbox) elements
-  itemWrapperClassName?: string; // Class for the div wrapping each checkbox+label
+  legend?: string;
+  options: { id: string; label: string }[];
+  selectedValues: string[];
+  onChange: (id: string, checked: boolean) => void;
+  fieldsetClassName?: string;
+  legendClassName?: string;
+  checkboxWrapperClassName?: string;
+  checkboxClassName?: string;
+  labelClassName?: string;
 }
 
 const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
@@ -24,32 +24,32 @@ const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
   onChange,
   fieldsetClassName = '',
   legendClassName = '',
-  labelClassName = '',
+  checkboxWrapperClassName = '',
   checkboxClassName = '',
-  itemWrapperClassName = ''
+  labelClassName = '',
 }) => {
-  // Combine default styles with passed-in classes
-  const defaultFieldsetClasses = "mb-4";
-  const defaultLegendClasses = "block text-sm font-medium text-gray-700 mb-2";
-  const defaultItemWrapperClasses = "flex items-center";
-  const defaultCheckboxClasses = "h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500";
-  const defaultLabelClasses = "ml-2 block text-sm text-gray-900";
+  const defaultFieldsetClasses = "border-none p-0 m-0"; // Basic reset
+  const defaultLegendClasses = "block text-sm font-medium text-text-secondary mb-3"; // Theme color
+  const defaultCheckboxWrapperClasses = "flex items-center";
+  // Theme colors, remove ring
+  const defaultCheckboxClasses = "h-4 w-4 rounded border-border bg-card text-accent focus:ring-accent focus:ring-offset-card";
+  const defaultLabelClasses = "ml-2 block text-sm text-text-primary"; // Theme color
 
   return (
     <fieldset className={`${defaultFieldsetClasses} ${fieldsetClassName}`.trim()}>
-      <legend className={`${defaultLegendClasses} ${legendClassName}`.trim()}>{legend}</legend>
-      <div className="space-y-2">
+      {legend && <legend className={`${defaultLegendClasses} ${legendClassName}`.trim()}>{legend}</legend>}
+      <div className="space-y-3"> {/* Adjust spacing as needed */}
         {options.map((option) => (
-          <div key={option.id} className={`${defaultItemWrapperClasses} ${itemWrapperClassName}`.trim()}>
+          <div key={option.id} className={`${defaultCheckboxWrapperClasses} ${checkboxWrapperClassName}`.trim()}>
             <input
               id={option.id}
               name={option.id}
               type="checkbox"
-              className={`${defaultCheckboxClasses} ${checkboxClassName}`.trim()} // Apply combined checkbox classes
-              checked={selectedValues.includes(option.id)} // Check if ID is in the selected array
+              checked={selectedValues.includes(option.id)}
               onChange={(e) => onChange(option.id, e.target.checked)}
+              className={`${defaultCheckboxClasses} ${checkboxClassName}`.trim()}
             />
-            <label htmlFor={option.id} className={`${defaultLabelClasses} ${labelClassName}`.trim()}> {/* Apply combined label classes */}
+            <label htmlFor={option.id} className={`${defaultLabelClasses} ${labelClassName}`.trim()}>
               {option.label}
             </label>
           </div>
