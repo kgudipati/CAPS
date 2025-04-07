@@ -4,36 +4,63 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image'; // Import Image component
 import TextAreaInput from '@/components/TextAreaInput';
-import CheckboxGroup from '@/components/CheckboxGroup';
 import BadgeInput from '@/components/BadgeInput'; // Import BadgeInput
-import { useProjectInputStore, AIProvider } from '@/lib/store';
+import { useProjectInputStore, AIProvider, GenerationStatusMap, GenerationItemStatus } from '@/lib/store'; // Import status types
 import { TechStack, GenerationOptions, ProjectInputData } from '@/types'; // Removed ProjectInputState
 import { TECH_CHOICES } from '@/lib/constants'; // Import tech choices
+import { CheckCircleIcon, ExclamationCircleIcon, ArrowPathIcon } from '@heroicons/react/20/solid'; // Example: Heroicons (or use react-icons)
+// Alternative: import { FaSpinner, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
+
+// --- Helper: Function to decode base64 and trigger download ---
+function downloadZip(base64Data: string, filename: string) {
+    try {
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/zip' });
+
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        console.log('ZIP downloaded successfully from base64 data');
+    } catch (error) {
+        console.error("Error decoding or downloading ZIP:", error);
+        // Handle error appropriately - maybe show an error message to the user
+        // using store.setError or a local state
+    }
+}
 
 // Define generation options (tech stack options removed)
 // const techStackOptions = [ ... ]; // Removed
 
-const generationOptions = {
-  rules: [{ id: 'gen-rules', label: 'Project-specific Rules' }],
-  specs: [
-    { id: 'spec-prd', label: 'PRD' },
-    { id: 'spec-tps', label: 'TPS' },
-    { id: 'spec-uiux', label: 'UI/UX Spec' },
-    { id: 'spec-tech', label: 'Technical Spec' },
-    { id: 'spec-data', label: 'Data Spec' },
-    { id: 'spec-integ', label: 'Integration Spec' },
-  ],
-  checklist: [{ id: 'gen-checklist', label: 'Task Checklist' }],
-};
+const generationOptionDetails: {
+    id: string;
+    label: string;
+    storeKey: keyof GenerationStatusMap;
+}[] = [
+    { id: 'gen-rules', label: 'Project-specific Rules', storeKey: 'rules' },
+    { id: 'spec-prd', label: 'PRD', storeKey: 'prd' },
+    { id: 'spec-tps', label: 'TPS', storeKey: 'tps' },
+    { id: 'spec-uiux', label: 'UI/UX Spec', storeKey: 'uiUx' },
+    { id: 'spec-tech', label: 'Technical Spec', storeKey: 'technical' },
+    { id: 'spec-data', label: 'Data Spec', storeKey: 'data' },
+    { id: 'spec-integ', label: 'Integration Spec', storeKey: 'integration' },
+    { id: 'gen-checklist', label: 'Task Checklist', storeKey: 'checklist' },
+];
 
-// Mapping from store keys to option IDs (inverse of the one in handleGenerationOptionChange)
-const specKeyToOptionIdMap: { [key in keyof GenerationOptions['specs']]: string } = {
-    prd: 'spec-prd',
-    tps: 'spec-tps',
-    uiUx: 'spec-uiux',
-    technical: 'spec-tech',
-    data: 'spec-data',
-    integration: 'spec-integ',
+// Separate options for CheckboxGroup structure
+const generationOptionsStructure = {
+  rules: [generationOptionDetails.find(o => o.storeKey === 'rules')!],
+  specs: generationOptionDetails.filter(o => o.storeKey !== 'rules' && o.storeKey !== 'checklist'),
+  checklist: [generationOptionDetails.find(o => o.storeKey === 'checklist')!],
 };
 
 const TOTAL_STEPS = 5; // Corresponds to currentStep 0-4
@@ -46,6 +73,23 @@ const stepInfo = [
   { title: "Technology Stack", subtitle: "Specify the technologies you plan to use (optional)." },
   { title: "Generation Options", subtitle: "Select the documents and artifacts you want to generate." },
 ];
+
+// --- Helper Component for Status Indicator ---
+const StatusIndicator: React.FC<{ status: GenerationItemStatus }> = ({ status }) => {
+    if (status === 'pending') {
+        return <ArrowPathIcon className="h-5 w-5 text-yellow-400 animate-spin ml-2" aria-label="Generating..." />;
+        // Alt: return <FaSpinner className="h-5 w-5 text-yellow-400 animate-spin ml-2" aria-label="Generating..." />;
+    }
+    if (status === 'success') {
+        return <CheckCircleIcon className="h-5 w-5 text-green-400 ml-2" aria-label="Success" />;
+        // Alt: return <FaCheckCircle className="h-5 w-5 text-green-400 ml-2" aria-label="Success" />;
+    }
+    if (status === 'error') {
+        return <ExclamationCircleIcon className="h-5 w-5 text-red-400 ml-2" aria-label="Error" />;
+        // Alt: return <FaExclamationCircle className="h-5 w-5 text-red-400 ml-2" aria-label="Error" />;
+    }
+    return null; // Idle or other states
+};
 
 export default function HomePage() {
   const store = useProjectInputStore();
@@ -63,37 +107,35 @@ export default function HomePage() {
   };
 
   const handleGenerationOptionChange = (type: 'rules' | 'specs' | 'checklist', optionId: string, isChecked: boolean) => {
-     console.log('Generation Option Change:', type, optionId, isChecked);
+    console.log('Generation Option Change:', type, optionId, isChecked);
 
-     // Type assertion for keys based on type
-     let key: keyof GenerationOptions['specs'] | 'rules' | 'checklist';
+    let key: keyof GenerationOptions['specs'] | 'rules' | 'checklist';
 
-     if (type === 'rules') {
-         key = 'rules';
-     } else if (type === 'checklist') {
-         key = 'checklist';
-     } else if (type === 'specs') {
-         const specKeyMap: { [id: string]: keyof GenerationOptions['specs'] } = {
-             'spec-prd': 'prd',
-             'spec-tps': 'tps',
-             'spec-uiux': 'uiUx',
-             'spec-tech': 'technical',
-             'spec-data': 'data',
-             'spec-integ': 'integration',
-         };
-         const mappedKey = specKeyMap[optionId];
-         if (!mappedKey) {
-             console.error(`Invalid spec optionId: ${optionId}`);
-             return;
-         }
-         key = mappedKey;
-     } else {
-         console.error(`Invalid generation option type: ${type}`);
-         return;
-     }
+    if (type === 'rules') {
+        key = 'rules';
+    } else if (type === 'checklist') {
+        key = 'checklist';
+    } else if (type === 'specs') {
+        const specKeyMap: { [id: string]: keyof GenerationOptions['specs'] } = {
+            'spec-prd': 'prd',
+            'spec-tps': 'tps',
+            'spec-uiux': 'uiUx',
+            'spec-tech': 'technical',
+            'spec-data': 'data',
+            'spec-integ': 'integration',
+        };
+        const mappedKey = specKeyMap[optionId];
+        if (!mappedKey) {
+            console.error(`Invalid spec optionId: ${optionId}`);
+            return;
+        }
+        key = mappedKey;
+    } else {
+        console.error(`Invalid generation option type: ${type}`);
+        return;
+    }
 
-     // Call store action with correctly typed key
-     store.updateGenerationOption(type, key, isChecked);
+    store.updateGenerationOption(type, key, isChecked);
   };
 
   // Handler for AI Provider selection
@@ -105,8 +147,20 @@ export default function HomePage() {
     event?.preventDefault();
     if (store.currentStep !== TOTAL_STEPS - 1) return; // Only submit on last step
 
-    store.setLoading(true);
+    store.setGenerating(true);
     store.setError(null);
+    store.resetGenerationStatus(); // Reset statuses before starting
+
+    // Set pending status for selected items
+    const pendingStatuses: Partial<GenerationStatusMap> = {};
+    if (store.generationOptions.rules) pendingStatuses.rules = 'pending';
+    if (store.generationOptions.checklist) pendingStatuses.checklist = 'pending';
+    Object.entries(store.generationOptions.specs).forEach(([key, value]) => {
+      if (value) {
+        pendingStatuses[key as keyof GenerationOptions['specs']] = 'pending';
+      }
+    });
+    store.setGenerationStatuses(pendingStatuses);
 
     const currentState = useProjectInputStore.getState();
     const formData = {
@@ -129,39 +183,42 @@ export default function HomePage() {
         body: JSON.stringify(formData),
       });
 
+      const responseBody = await response.json();
+
       if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch { /* Ignore parseError variable is unused */ }
-        throw new Error(errorData?.error || `HTTP error! status: ${response.status} ${response.statusText}`);
+        throw new Error(responseBody.error || `HTTP error! status: ${response.status} ${response.statusText}`);
       }
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      const contentDisposition = response.headers.get('content-disposition');
-      let filename = 'cursor-starter-kit.zip';
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?(.+?)"?($|;)/);
-        if (filenameMatch && filenameMatch[1]) {
-          filename = filenameMatch[1];
-        }
-      }
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      console.log('ZIP downloaded successfully');
+      // Process successful response
+      const { results: apiResults, zipData } = responseBody as { results: Partial<GenerationStatusMap>; zipData: string };
+
+      // Update store statuses based on API results
+      store.setGenerationStatuses(apiResults);
+
+      // Trigger download
+      downloadZip(zipData, `caps-starter-kit-${Date.now()}.zip`);
+
+      // You might want to reset the form or move to a success step here
+      // store.reset();
+      // Or maybe just clear the error and generating state, leave results shown?
 
     } catch (err) {
         console.error("Form submission error:", err);
         const message = err instanceof Error ? err.message : 'An unknown error occurred during generation.';
         store.setError(message);
+        // Update status of pending items to error
+        const errorStatuses: Partial<GenerationStatusMap> = {};
+        Object.entries(store.generationStatus).forEach(([key, status]) => {
+            if (status === 'pending') {
+                errorStatuses[key as keyof GenerationStatusMap] = 'error';
+            }
+        });
+        store.setGenerationStatuses(errorStatuses);
+
     } finally {
-        store.setLoading(false);
+        store.setGenerating(false);
+        // Decide if statuses should be reset here or stay visible until user interaction
+        // store.resetGenerationStatus();
     }
   };
 
@@ -347,52 +404,84 @@ export default function HomePage() {
                   <div className="space-y-8">
                     <h3 className="text-lg font-medium text-neutral-200 mb-2">Generation Options</h3>
                     <div className="space-y-8">
-                      <CheckboxGroup
-                        legend="Generate Rules?"
-                        options={generationOptions.rules}
-                        selectedValues={store.generationOptions.rules ? [generationOptions.rules[0].id] : []}
-                        onChange={(id, checked) => handleGenerationOptionChange('rules', id, checked)}
-                        fieldsetClassName="mb-0"
-                        legendClassName="text-neutral-300 !mb-3"
-                        labelClassName="text-neutral-200"
-                        checkboxClassName="bg-neutral-600 border-neutral-500 text-teal-400 focus:ring-teal-500 rounded"
-                      />
-                       <CheckboxGroup
-                        legend="Generate Specs? (Select all that apply)"
-                        options={generationOptions.specs}
-                        selectedValues={Object.entries(store.generationOptions.specs)
-                          .filter(([, value]) => value)
-                          .map(([key]) => specKeyToOptionIdMap[key as keyof GenerationOptions['specs']])
-                          .filter(id => !!id)}
-                        onChange={(id, checked) => handleGenerationOptionChange('specs', id, checked)}
-                        fieldsetClassName="mb-0"
-                        legendClassName="text-neutral-300 !mb-3"
-                        labelClassName="text-neutral-200"
-                        checkboxClassName="bg-neutral-600 border-neutral-500 text-teal-400 focus:ring-teal-500 rounded"
-                      />
-                       {/* Wrap Checklist option for subheading */}
-                       <div className="space-y-3"> {/* Added spacing */}
-                         <legend className="block text-sm font-medium text-neutral-300"> {/* Mimic CheckboxGroup legend style */}
-                           Generate Task Checklist?
-                         </legend>
-                         {/* Direct Checkbox for Single Checklist Option */}
-                         <div className="flex items-center"> {/* Removed mt-1 as spacing handled by parent */}
-                           <input
-                             id="gen-checklist"
-                             name="gen-checklist"
-                             type="checkbox"
-                             checked={!!store.generationOptions.checklist} // Use boolean value
-                             onChange={(e) => handleGenerationOptionChange('checklist', 'gen-checklist', e.target.checked)}
-                             className="h-4 w-4 rounded border-neutral-500 bg-neutral-600 text-teal-400 focus:ring-teal-500" // Use consistent checkbox classes
-                           />
-                           <label htmlFor="gen-checklist" className="ml-2 block text-sm font-medium text-neutral-200"> {/* Use consistent label classes */}
-                             Generate Task Checklist
-                           </label>
-                         </div>
-                       </div>
+                      {/* --- Rules --- */}
+                      <div className="space-y-3">
+                        <legend className="block text-sm font-medium text-neutral-300">Generate Rules?</legend>
+                        {generationOptionsStructure.rules.map((option) => (
+                          <div key={option.id} className="flex items-center">
+                            <input
+                              id={option.id}
+                              name={option.id}
+                              type="checkbox"
+                              checked={!!store.generationOptions.rules} // Direct boolean check
+                              onChange={(e) => handleGenerationOptionChange('rules', option.id, e.target.checked)}
+                              className="h-4 w-4 rounded border-neutral-500 bg-neutral-600 text-teal-400 focus:ring-teal-500"
+                              disabled={store.isGenerating} // Disable during generation
+                            />
+                            <label htmlFor={option.id} className="ml-2 block text-sm font-medium text-neutral-200">
+                              {option.label}
+                            </label>
+                            {/* Status Indicator */}
+                            {store.isGenerating && store.generationOptions.rules && <StatusIndicator status={store.generationStatus.rules} />}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* --- Specs --- */}
+                      <fieldset className="mb-0">
+                        <legend className="block text-sm font-medium text-neutral-300 mb-3">Generate Specs? (Select all that apply)</legend>
+                        <div className="space-y-3"> {/* Consistent spacing */}
+                          {generationOptionsStructure.specs.map((option) => {
+                            const specKey = option.storeKey as keyof GenerationOptions['specs'];
+                            const isChecked = !!store.generationOptions.specs[specKey];
+                            const status = store.generationStatus[specKey];
+                            return (
+                              <div key={option.id} className="flex items-center">
+                                <input
+                                  id={option.id}
+                                  name={option.id}
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={(e) => handleGenerationOptionChange('specs', option.id, e.target.checked)}
+                                  className="h-4 w-4 rounded border-neutral-500 bg-neutral-600 text-teal-400 focus:ring-teal-500"
+                                  disabled={store.isGenerating}
+                                />
+                                <label htmlFor={option.id} className="ml-2 block text-sm font-medium text-neutral-200">
+                                  {option.label}
+                                </label>
+                                {/* Status Indicator */}
+                                {store.isGenerating && isChecked && <StatusIndicator status={status} />}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </fieldset>
+
+                      {/* --- Checklist --- */}
+                      <div className="space-y-3">
+                        <legend className="block text-sm font-medium text-neutral-300">Generate Task Checklist?</legend>
+                        {generationOptionsStructure.checklist.map((option) => (
+                          <div key={option.id} className="flex items-center">
+                            <input
+                              id={option.id}
+                              name={option.id}
+                              type="checkbox"
+                              checked={!!store.generationOptions.checklist} // Direct boolean check
+                              onChange={(e) => handleGenerationOptionChange('checklist', option.id, e.target.checked)}
+                              className="h-4 w-4 rounded border-neutral-500 bg-neutral-600 text-teal-400 focus:ring-teal-500"
+                              disabled={store.isGenerating} // Disable during generation
+                            />
+                            <label htmlFor={option.id} className="ml-2 block text-sm font-medium text-neutral-200">
+                              {option.label}
+                            </label>
+                            {/* Status Indicator */}
+                            {store.isGenerating && store.generationOptions.checklist && <StatusIndicator status={store.generationStatus.checklist} />}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-  );
+              );
           default: return null;
       }
   };
@@ -447,7 +536,7 @@ export default function HomePage() {
                 <button
                   onClick={() => paginate(-1)}
                   className="text-teal-400 hover:text-teal-300 font-medium transition duration-150 ease-in-out disabled:opacity-50"
-                  disabled={store.isLoading}
+                  disabled={store.isGenerating} // Disable while generating
                 >
                   Previous
                 </button>
@@ -455,11 +544,11 @@ export default function HomePage() {
 
               <button
                 onClick={() => store.currentStep === TOTAL_STEPS - 1 ? handleSubmit() : paginate(1)}
-                className={`bg-teal-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-neutral-800 disabled:opacity-60 disabled:bg-teal-800/50 disabled:cursor-not-allowed transition duration-150 ease-in-out shadow-md ${store.isLoading ? 'animate-pulse' : ''}`}
-                disabled={store.isLoading}
+                className={`bg-teal-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-neutral-800 disabled:opacity-60 disabled:bg-teal-800/50 disabled:cursor-not-allowed transition duration-150 ease-in-out shadow-md ${store.isGenerating ? 'animate-pulse' : ''}`}
+                disabled={store.isGenerating} // Disable while generating
               >
-                {store.isLoading
-                    ? (store.currentStep === TOTAL_STEPS - 1 ? 'Generating...' : 'Loading...')
+                {store.isGenerating
+                    ? (store.currentStep === TOTAL_STEPS - 1 ? 'Generating...' : 'Loading...') // Keep Loading... for intermediate steps
                     : (store.currentStep === TOTAL_STEPS - 1 ? 'Create Project Setup' : 'Next')}
               </button>
             </div>
