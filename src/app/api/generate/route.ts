@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod'; // Need Zod here again for the enum
 import { FileData, GenerationOptions, projectInputSchema as baseSchema } from '@/types'; // Removed unused BaseProjectInputData
-import { AIProvider, GenerationStatusMap, GenerationItemStatus } from '@/lib/store'; // Import AIProvider type and Status types
+import { AIProvider, GenerationStatusMap } from '@/lib/store'; // Import AIProvider type and Status types
 import { readTemplateFile, createZipArchive } from '@/lib/files';
-import { generateContentLangChain } from '@/lib/ai';
+import { generateContentLangChain, getLlm } from '@/lib/ai';
 import {
+    formatTechStack,
     projectRulesTemplate,
     getProjectRulesInput,
     specTemplate,
@@ -12,6 +13,7 @@ import {
     checklistTemplate,
     getChecklistInput
 } from '@/lib/prompts';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models'; // Import BaseChatModel
 
 // Extend the base Zod schema to include the AI provider selection
 const apiInputSchema = baseSchema.extend({
@@ -65,9 +67,25 @@ export async function POST(request: Request) {
   const requestBody: ApiInputData = validationResult.data;
   console.log('Request body validated successfully.');
 
+  let llm: BaseChatModel;
+  let providerName: string;
+  let modelName: string;
+
   try {
+    // --- Instantiate LLM ONCE --- 
+    try {
+        ({ llm, providerName, modelName } = getLlm(requestBody.selectedAIProvider));
+    } catch (configError) {
+        console.error("LLM Configuration Error:", configError);
+        // Re-throw config errors to be caught by the main try/catch
+        if (configError instanceof Error) throw configError;
+        throw new Error("Unknown AI Configuration Error.");
+    }
+
+    // --- Prepare Common Inputs ONCE --- 
+    const techStackInfo = formatTechStack(requestBody.techStack);
+
     const filesToZip: FileData[] = [];
-    // Store promises with their corresponding keys for status tracking
     const generationTasks: { key: keyof GenerationStatusMap; promise: Promise<FileData | null> }[] = [];
 
     // 1. Add static rules
@@ -93,8 +111,10 @@ export async function POST(request: Request) {
             key: taskKey,
             promise: (async () => {
                 try {
-                    const inputVars = getProjectRulesInput(requestBody);
-                    const content = await generateContentLangChain(requestBody.selectedAIProvider, projectRulesTemplate, inputVars);
+                    // Pass techStackInfo
+                    const inputVars = getProjectRulesInput(requestBody, techStackInfo);
+                    // Pass pre-configured llm, providerName, modelName
+                    const content = await generateContentLangChain(llm, providerName, modelName, projectRulesTemplate, inputVars);
                     console.log('Project-specific rules generated.');
                     return { path: '.cursor/rules/project-specific-rules.mdc', content: content };
                 } catch (err) {
@@ -117,8 +137,10 @@ export async function POST(request: Request) {
                 key: taskKey,
                 promise: (async () => {
                     try {
-                        const inputVars = getSpecInput(key, requestBody);
-                        const content = await generateContentLangChain(requestBody.selectedAIProvider, specTemplate, inputVars);
+                        // Pass techStackInfo
+                        const inputVars = getSpecInput(key, requestBody, techStackInfo);
+                        // Pass pre-configured llm, providerName, modelName
+                        const content = await generateContentLangChain(llm, providerName, modelName, specTemplate, inputVars);
                         const match = content.match(/--- BEGIN .*? ---\n?([\s\S]*?)\n?--- END .*? ---/);
                         const finalContent = match ? match[1].trim() : content;
                         console.log(`${key} spec generated.`);
@@ -139,8 +161,10 @@ export async function POST(request: Request) {
             key: taskKey,
             promise: (async () => {
                 try {
-                    const inputVars = getChecklistInput(requestBody);
-                    const content = await generateContentLangChain(requestBody.selectedAIProvider, checklistTemplate, inputVars);
+                    // Pass techStackInfo
+                    const inputVars = getChecklistInput(requestBody, techStackInfo);
+                    // Pass pre-configured llm, providerName, modelName
+                    const content = await generateContentLangChain(llm, providerName, modelName, checklistTemplate, inputVars);
                     console.log('Checklist generated.');
                     return { path: 'checklist.md', content: content };
                 } catch (err) {
@@ -197,6 +221,10 @@ export async function POST(request: Request) {
     console.error('Error during starter kit generation process:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     // Return a generic error, specific errors handled by Promise.allSettled results
-    return NextResponse.json({ error: `Generation failed: ${errorMessage}` }, { status: 500 });
+    let clientErrorMessage = `Generation failed: ${errorMessage}`;
+    if (errorMessage.includes("AI Configuration Error")) {
+      clientErrorMessage = errorMessage; // Pass specific config errors to client
+    }
+    return NextResponse.json({ error: clientErrorMessage }, { status: 500 });
   }
 } 

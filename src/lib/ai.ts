@@ -7,7 +7,7 @@ import { PromptTemplate } from "@langchain/core/prompts";
 import { AIProvider } from "./store"; // Import AIProvider type
 
 // Helper function to select the LLM based on SELECTED provider
-function getLlm(selectedProvider: AIProvider): {
+export function getLlm(selectedProvider: AIProvider): {
     llm: BaseChatModel;
     providerName: string;
     modelName: string;
@@ -58,32 +58,26 @@ function getLlm(selectedProvider: AIProvider): {
 
 /**
  * Calls the AI provider selected by the user via LangChain.
- * Retrieves the correct API key based on the selected provider.
+ * Assumes LLM instance is already configured and passed in.
  *
- * @param selectedProvider The AI provider selected in the UI.
+ * @param llm The pre-configured LangChain BaseChatModel instance.
+ * @param providerName The name of the provider (for logging/errors).
+ * @param modelName The specific model name being used (for logging/errors).
  * @param promptTemplateString The template string with placeholders.
  * @param inputVariables An object containing values for the placeholders.
  * @returns The generated text content.
- * @throws Throws an error if configuration is missing, API call fails, or returns an error.
+ * @throws Throws an error if the chain invocation fails.
  */
-export async function generateContentLangChain(selectedProvider: AIProvider, promptTemplateString: string, inputVariables: Record<string, any>): Promise<string> {
-    let llm: BaseChatModel;
-    let providerName: string;
-    let modelName: string;
+export async function generateContentLangChain(
+    llm: BaseChatModel,
+    providerName: string, // Added for context
+    modelName: string, // Added for context
+    promptTemplateString: string,
+    inputVariables: Record<string, any>
+): Promise<string> {
+    // Removed internal LLM instantiation logic
 
-    try {
-        // Pass the selected provider to get the correct LLM instance and key
-        ({ llm, providerName, modelName } = getLlm(selectedProvider));
-    } catch (configError) {
-        console.error("LLM Configuration Error:", configError);
-        if (configError instanceof Error) {
-           // Pass config error message directly
-           throw configError;
-        }
-         throw new Error("Unknown AI Configuration Error.");
-    }
-
-    console.log(`Invoking ${providerName} model ${modelName} via LangChain...`);
+    console.log(`Invoking ${providerName} model ${modelName} via pre-configured LangChain instance...`);
 
     try {
         const prompt = PromptTemplate.fromTemplate(promptTemplateString);
@@ -92,7 +86,7 @@ export async function generateContentLangChain(selectedProvider: AIProvider, pro
         const result = await chain.invoke(inputVariables);
 
         if (result === undefined || result === null) {
-            throw new Error("AI generation failed: No content received from the chain.");
+            throw new Error(`AI generation failed: No content received from the chain (${providerName}).`);
         }
         console.log(`LangChain generation successful using ${providerName}.`);
         return result.trim();
@@ -100,11 +94,13 @@ export async function generateContentLangChain(selectedProvider: AIProvider, pro
     } catch (error) {
         console.error(`Error calling LangChain ${providerName}:`, error);
         if (error instanceof Error) {
+            // Keep specific error messages for API keys/quota if detectable
             if (error.message.includes("Incorrect API key") || error.message.includes("API key invalid")) {
                  throw new Error(`AI API call failed: Incorrect API Key provided for ${providerName}.`);
             } else if (error.message.includes("quota")) {
                  throw new Error(`AI API call failed: API Quota exceeded for ${providerName}.`);
             }
+            // Generic error for other LangChain/API issues
             throw new Error(`AI API call failed via LangChain (${providerName}): ${error.message}`);
         }
         throw new Error(`An unknown error occurred while calling the ${providerName} AI API via LangChain.`);

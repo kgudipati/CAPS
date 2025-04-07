@@ -77,11 +77,11 @@ const stepInfo = [
 // --- Helper Component for Status Indicator ---
 const StatusIndicator: React.FC<{ status: GenerationItemStatus }> = ({ status }) => {
     if (status === 'pending') {
-        return <ArrowPathIcon className="h-5 w-5 text-yellow-400 animate-spin ml-2" aria-label="Generating..." />;
+        return <ArrowPathIcon className="h-5 w-5 text-neutral-400 animate-spin ml-2" aria-label="Generating..." />;
         // Alt: return <FaSpinner className="h-5 w-5 text-yellow-400 animate-spin ml-2" aria-label="Generating..." />;
     }
     if (status === 'success') {
-        return <CheckCircleIcon className="h-5 w-5 text-green-400 ml-2" aria-label="Success" />;
+        return <CheckCircleIcon className="h-5 w-5 text-teal-400 ml-2" aria-label="Success" />;
         // Alt: return <FaCheckCircle className="h-5 w-5 text-green-400 ml-2" aria-label="Success" />;
     }
     if (status === 'error') {

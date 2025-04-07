@@ -4,7 +4,7 @@ import { ProjectInputData, TechStack } from "@/types"; // Use correct ProjectInp
 type InputTechStack = Partial<{ [K in keyof TechStack]: string[] | undefined }>;
 
 // Helper function to format tech stack details
-function formatTechStack(techStack: InputTechStack): string {
+export function formatTechStack(techStack: InputTechStack): string {
     let stackDetails = "";
     // Helper to format each part of the stack
     const formatPart = (label: string, items: string[] | undefined) => {
@@ -63,13 +63,13 @@ Example rule format:
 Output only the list of rules in markdown bullet point format, starting immediately with the first bullet point.
 `;
 
-export function getProjectRulesInput(inputs: ProjectInputData): ProjectBaseInput {
+export function getProjectRulesInput(inputs: ProjectInputData, techStackInfo: string): ProjectBaseInput {
     return {
         projectDescription: inputs.projectDescription,
         problemStatement: inputs.problemStatement,
         features: inputs.features,
         targetUsers: inputs.targetUsers,
-        techStackInfo: formatTechStack(inputs.techStack),
+        techStackInfo: techStackInfo,
     };
 }
 
@@ -532,7 +532,7 @@ interface SpecInput extends ProjectBaseInput {
 }
 
 // Function to get the input object for spec generation
-export function getSpecInput(specType: keyof ProjectInputData['generationOptions']['specs'], inputs: ProjectInputData): SpecInput {
+export function getSpecInput(specType: keyof ProjectInputData['generationOptions']['specs'], inputs: ProjectInputData, techStackInfo: string): SpecInput {
     let specFocus = "";
     let specStructure = defaultSpecStructure; // Start with default
 
@@ -573,7 +573,7 @@ export function getSpecInput(specType: keyof ProjectInputData['generationOptions
         problemStatement: inputs.problemStatement,
         features: inputs.features,
         targetUsers: inputs.targetUsers,
-        techStackInfo: formatTechStack(inputs.techStack),
+        techStackInfo: techStackInfo,
         specFocus: specFocus, // Pass the determined focus
         specStructure: specStructure, // Pass the processed structure string
     };
@@ -706,8 +706,8 @@ Generate a comprehensive, dependency-aware, TDD-style coding checklist based str
 --- END CHECKLIST ---
 `;
 
-
-// Function to get input for checklist (same as project rules)
-export function getChecklistInput(inputs: ProjectInputData): ProjectBaseInput {
-    return getProjectRulesInput(inputs); // Reuses the same input structure
+// Updated function signature (reusing getProjectRulesInput structure)
+export function getChecklistInput(inputs: ProjectInputData, techStackInfo: string): ProjectBaseInput {
+    // Reuses the same input structure, just pass techStackInfo through
+    return getProjectRulesInput(inputs, techStackInfo);
 } 
