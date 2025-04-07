@@ -11,9 +11,12 @@ import {
     specTemplate,
     getSpecInput,
     checklistTemplate,
-    getChecklistInput
+    getChecklistInput,
+    ProjectBaseInput, // Import base input type
+    SpecInput, // Import spec input type
 } from '@/lib/prompts';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models'; // Import BaseChatModel
+import pLimit from 'p-limit'; // Import p-limit
 
 // Extend the base Zod schema to include the AI provider selection
 const apiInputSchema = baseSchema.extend({
@@ -44,6 +47,36 @@ function getSpecFilePath(key: keyof GenerationOptions['specs']): string | null {
     else return null;
     return filePath;
 }
+
+// --- Define Task Types ---
+interface GenerationTaskBase {
+    key: keyof GenerationStatusMap;
+    filePath: string;
+}
+
+interface RulesTask extends GenerationTaskBase {
+    type: 'rules';
+    template: string;
+    getInputVars: (inputs: ApiInputData, techStackInfo: string) => ProjectBaseInput;
+}
+
+interface SpecTask extends GenerationTaskBase {
+    type: 'spec';
+    specType: keyof GenerationOptions['specs'];
+    template: string;
+    getInputVars: (specType: keyof GenerationOptions['specs'], inputs: ApiInputData, techStackInfo: string) => SpecInput;
+}
+
+interface ChecklistTask extends GenerationTaskBase {
+    type: 'checklist';
+    template: string;
+    getInputVars: (inputs: ApiInputData, techStackInfo: string) => ProjectBaseInput;
+}
+
+type GenerationTask = RulesTask | SpecTask | ChecklistTask;
+
+// --- CONCURRENCY LIMIT --- 
+const CONCURRENCY = 3; // Limit to 3 simultaneous AI calls
 
 export async function POST(request: Request) {
   console.log('Received POST request to /api/generate');
@@ -86,7 +119,7 @@ export async function POST(request: Request) {
     const techStackInfo = formatTechStack(requestBody.techStack);
 
     const filesToZip: FileData[] = [];
-    const generationTasks: { key: keyof GenerationStatusMap; promise: Promise<FileData | null> }[] = [];
+    const generationTasksToRun: GenerationTask[] = []; // Define specific tasks
 
     // 1. Add static rules
     console.log('Reading static rule files...');
@@ -101,104 +134,118 @@ export async function POST(request: Request) {
     }
     console.log('Static rules added.');
 
-    // 2. Prepare and queue AI generation tasks
-    console.log('Preparing AI generation tasks...');
+    // 2. Define AI generation tasks based on selections
+    console.log('Defining AI generation tasks...');
 
-    // Generate Project Rules if selected
     if (requestBody.generationOptions.rules) {
-        const taskKey: keyof GenerationStatusMap = 'rules';
-        generationTasks.push({
-            key: taskKey,
-            promise: (async () => {
-                try {
-                    // Pass techStackInfo
-                    const inputVars = getProjectRulesInput(requestBody, techStackInfo);
-                    // Pass pre-configured llm, providerName, modelName
-                    const content = await generateContentLangChain(llm, providerName, modelName, projectRulesTemplate, inputVars);
-                    console.log('Project-specific rules generated.');
-                    return { path: '.cursor/rules/project-specific-rules.mdc', content: content };
-                } catch (err) {
-                    console.error('Failed to generate project rules:', err);
-                    throw err; // Re-throw to be caught by allSettled
-                }
-            })()
+        generationTasksToRun.push({
+            key: 'rules',
+            type: 'rules',
+            filePath: '.cursor/rules/project-specific-rules.mdc',
+            template: projectRulesTemplate,
+            getInputVars: getProjectRulesInput,
         });
     }
 
-    // Generate Specs if selected
     for (const specType in requestBody.generationOptions.specs) {
         const key = specType as keyof GenerationOptions['specs'];
         if (requestBody.generationOptions.specs[key]) {
-            const taskKey = key as keyof GenerationStatusMap;
             const filePath = getSpecFilePath(key);
-            if (!filePath) continue; // Skip if spec type has no defined path
-
-            generationTasks.push({
-                key: taskKey,
-                promise: (async () => {
-                    try {
-                        // Pass techStackInfo
-                        const inputVars = getSpecInput(key, requestBody, techStackInfo);
-                        // Pass pre-configured llm, providerName, modelName
-                        const content = await generateContentLangChain(llm, providerName, modelName, specTemplate, inputVars);
-                        const match = content.match(/--- BEGIN .*? ---\n?([\s\S]*?)\n?--- END .*? ---/);
-                        const finalContent = match ? match[1].trim() : content;
-                        console.log(`${key} spec generated.`);
-                        return { path: filePath, content: finalContent };
-                    } catch (err) {
-                        console.error(`Failed to generate ${key} spec:`, err);
-                        throw err; // Re-throw
-                    }
-                })()
-            });
+            if (filePath) {
+                generationTasksToRun.push({
+                    key: key as keyof GenerationStatusMap, // Ensure key matches status map
+                    type: 'spec',
+                    specType: key,
+                    filePath: filePath,
+                    template: specTemplate,
+                    getInputVars: getSpecInput,
+                });
+            }
         }
     }
 
-    // Generate Checklist if selected
     if (requestBody.generationOptions.checklist) {
-        const taskKey: keyof GenerationStatusMap = 'checklist';
-        generationTasks.push({
-            key: taskKey,
-            promise: (async () => {
-                try {
-                    // Pass techStackInfo
-                    const inputVars = getChecklistInput(requestBody, techStackInfo);
-                    // Pass pre-configured llm, providerName, modelName
-                    const content = await generateContentLangChain(llm, providerName, modelName, checklistTemplate, inputVars);
-                    console.log('Checklist generated.');
-                    return { path: 'checklist.md', content: content };
-                } catch (err) {
-                    console.error('Failed to generate checklist:', err);
-                    throw err; // Re-throw
-                }
-            })()
+        generationTasksToRun.push({
+            key: 'checklist',
+            type: 'checklist',
+            filePath: 'checklist.md',
+            template: checklistTemplate,
+            getInputVars: getChecklistInput,
         });
     }
 
-    // 3. Wait for all AI generations to settle
-    console.log(`Waiting for ${generationTasks.length} AI generation tasks to settle...`);
-    const settledResults = await Promise.allSettled(generationTasks.map(task => task.promise));
+    // 3. Execute tasks with concurrency limit
+    const limit = pLimit(CONCURRENCY);
+    console.log(`Executing ${generationTasksToRun.length} AI tasks with concurrency limit ${CONCURRENCY}...`);
+
+    const taskPromises = generationTasksToRun.map((task) => {
+        return limit(async (): Promise<{ key: keyof GenerationStatusMap; fileData: FileData | null; error?: any }> => {
+            try {
+                let inputVariables: ProjectBaseInput | SpecInput;
+                if (task.type === 'spec') {
+                    inputVariables = task.getInputVars(task.specType, requestBody, techStackInfo);
+                } else {
+                    inputVariables = task.getInputVars(requestBody, techStackInfo);
+                }
+
+                const content = await generateContentLangChain(
+                    llm,
+                    providerName,
+                    modelName,
+                    task.template,
+                    inputVariables
+                );
+
+                // Special handling for spec content extraction
+                let finalContent = content;
+                if (task.type === 'spec') {
+                    const match = content.match(/--- BEGIN .*? ---\n?([\s\S]*?)\n?--- END .*? ---/);
+                    finalContent = match ? match[1].trim() : content;
+                }
+
+                console.log(`${task.key} generated successfully.`);
+                return { key: task.key, fileData: { path: task.filePath, content: finalContent } };
+            } catch (err) {
+                console.error(`Failed to generate ${task.key}:`, err);
+                return { key: task.key, fileData: null, error: err }; // Return error status
+            }
+        });
+    });
+
+    // Wait for all limited promises to settle
+    const settledResults = await Promise.allSettled(taskPromises);
     console.log('All AI generation tasks settled.');
 
     // 4. Process results and build status map
     const generationResults: Partial<GenerationStatusMap> = {};
-    let generatedFileCount = 0;
-
-    settledResults.forEach((result, index) => {
-        const taskKey = generationTasks[index].key;
-        if (result.status === 'fulfilled' && result.value) {
-            filesToZip.push(result.value);
-            generationResults[taskKey] = 'success';
-            generatedFileCount++;
+    settledResults.forEach((result) => {
+        if (result.status === 'fulfilled') {
+            const { key, fileData, error } = result.value;
+            if (fileData && !error) {
+                filesToZip.push(fileData);
+                generationResults[key] = 'success';
+            } else {
+                // Task completed but returned an error object or null fileData
+                generationResults[key] = 'error';
+            }
         } else {
-            generationResults[taskKey] = 'error';
-            console.error(`Task for ${taskKey} failed:`, result.status === 'rejected' ? result.reason : 'No file data returned');
+            // Promise rejected (should ideally be caught within the limited function, but handle defensively)
+            console.error(`Task promise rejected:`, result.reason);
+            // We don't know which 'key' this belongs to easily if the promise itself rejects
+            // This case is less likely if errors are handled within the limit wrapper
+        }
+    });
+    // Ensure all requested tasks have a status (mark unfulfilled/rejected ones as error)
+    generationTasksToRun.forEach(task => {
+        if (!(task.key in generationResults)) {
+            generationResults[task.key] = 'error';
+            console.error(`Task for ${task.key} did not produce a result.`);
         }
     });
 
     // 5. Create ZIP archive
     console.log('Creating ZIP archive...');
-    const requestedDynamicCount = generationTasks.length;
+    const requestedDynamicCount = generationTasksToRun.length;
     if (filesToZip.length === STATIC_RULES.length && requestedDynamicCount > 0) {
         console.warn("No dynamic content was successfully generated or selected despite being requested.");
         // Still return status, but indicate overall failure maybe?

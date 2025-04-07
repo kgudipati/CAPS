@@ -26,7 +26,7 @@ export function formatTechStack(techStack: InputTechStack): string {
 // --- LangChain Prompt Template Strings --- 
 
 // Define input variables expected by each template
-interface ProjectBaseInput {
+export interface ProjectBaseInput {
     projectDescription: string;
     problemStatement: string;
     features: string;
@@ -526,7 +526,7 @@ Structure the {specFocus} with logical sections relevant to its type. Use clear 
 export const specTemplate = `${baseSpecPrompt}\\n{specStructure}\\n${endSpecPrompt}`;
 
 // Define input variables needed for spec generation
-interface SpecInput extends ProjectBaseInput {
+export interface SpecInput extends ProjectBaseInput {
     specFocus: string;
     specStructure: string;
 }
