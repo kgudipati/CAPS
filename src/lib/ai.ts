@@ -70,17 +70,21 @@ export function getLlm(selectedProvider: AIProvider): {
  */
 export async function generateContentLangChain(
     llm: BaseChatModel,
-    providerName: string, // Added for context
-    modelName: string, // Added for context
+    providerName: string,
+    modelName: string,
     promptTemplateString: string,
     inputVariables: Record<string, any>
 ): Promise<string> {
-    // Removed internal LLM instantiation logic
 
     console.log(`Invoking ${providerName} model ${modelName} via pre-configured LangChain instance...`);
 
     try {
-        const prompt = PromptTemplate.fromTemplate(promptTemplateString);
+        // Explicitly define input variables for the template
+        const prompt = new PromptTemplate({
+            template: promptTemplateString,
+            inputVariables: Object.keys(inputVariables),
+        });
+
         const outputParser = new StringOutputParser();
         const chain = prompt.pipe(llm).pipe(outputParser);
         const result = await chain.invoke(inputVariables);
